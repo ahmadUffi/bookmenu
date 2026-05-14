@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f3eb;
+  --foreground: #1f211d;
+  --cream: #f7f3eb;
+  --paper: #fffdf8;
+  --charcoal: #1f211d;
+  --muted: #666a61;
+  --line: #e8e1d6;
+  --green: #426b4f;
+  --green-dark: #294733;
+  --green-soft: #e8efe8;
+  --shadow-soft: 0 18px 60px rgba(49, 42, 31, 0.08);
+  --shadow-card: 0 10px 30px rgba(49, 42, 31, 0.07);
 }
 
 @theme inline {
@@ -12,15 +22,52 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+button,
+a,
+input {
+  min-width: 0;
+}
+
+button,
+a {
+  cursor: pointer;
+}
+
+::selection {
+  background: rgba(66, 107, 79, 0.2);
+}
+
+.mv-card {
+  border: 1px solid var(--line);
+  background: rgba(255, 253, 248, 0.88);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(16px);
+}
+
+.mv-grid-bg {
+  background-image:
+    linear-gradient(rgba(31, 33, 29, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 33, 29, 0.045) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
 }
