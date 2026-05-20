@@ -3,6 +3,11 @@ export const uploadConfig = {
   bucket: process.env.NEXT_PUBLIC_SUPABASE_MENU_BUCKET ?? "menus",
 };
 
+export const logoUploadConfig = {
+  maxImageBytes: 5 * 1024 * 1024,
+  bucket: process.env.NEXT_PUBLIC_SUPABASE_LOGO_BUCKET ?? "logos",
+};
+
 export function formatBytes(bytes: number) {
   const mb = bytes / 1024 / 1024;
   return `${mb.toFixed(mb >= 10 ? 0 : 1)} MB`;

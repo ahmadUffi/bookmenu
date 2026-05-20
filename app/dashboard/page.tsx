@@ -69,7 +69,6 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
     );
 
   const businessName = restaurants?.[0]?.restaurant_name ?? "";
-
   return (
     <DashboardApp
       deleteMenuAction={deleteMenu}

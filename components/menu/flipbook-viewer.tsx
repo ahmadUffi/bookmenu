@@ -1,15 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import HTMLFlipBook from "react-pageflip";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Expand,
-  Loader2,
-  Maximize2,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Maximize2 } from "lucide-react";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -20,12 +14,24 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 type FlipbookViewerProps = {
   pdfUrl: string;
-  title: string;
 };
 
-export default function FlipbookViewer({ pdfUrl, title }: FlipbookViewerProps) {
+type FlipbookController = {
+  flipNext: () => void;
+  flipPrev: () => void;
+};
+
+type FlipbookHandle = {
+  pageFlip: () => FlipbookController | null;
+};
+
+export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
+  const frameRef = useRef<HTMLDivElement>(null);
+  const bookRef = useRef<FlipbookHandle | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [page, setPage] = useState(0);
+  const [pageRatio, setPageRatio] = useState(390 / 550);
+  const [bookSize, setBookSize] = useState({ width: 390, height: 550 });
   const [error, setError] = useState(false);
 
   const pages = useMemo(
@@ -33,9 +39,42 @@ export default function FlipbookViewer({ pdfUrl, title }: FlipbookViewerProps) {
     [numPages],
   );
 
+  useEffect(() => {
+    const frame = frameRef.current;
+
+    if (!frame) {
+      return;
+    }
+
+    const updateSize = () => {
+      const vw = frame.clientWidth;
+      const mobile = window.matchMedia("(max-width: 767px)").matches;
+      const viewportHeight =
+        window.visualViewport?.height ?? window.innerHeight;
+      const availableHeight = Math.max(frame.clientHeight, 320);
+      const vh = mobile
+        ? availableHeight
+        : Math.max(viewportHeight - 240, 320);
+      const widthByHeight = Math.floor(vh * pageRatio);
+      const nextWidth = Math.max(260, Math.min(vw, widthByHeight, 980));
+      const nextHeight = Math.floor(nextWidth / pageRatio);
+      setBookSize({ width: nextWidth, height: nextHeight });
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(frame);
+    window.addEventListener("resize", updateSize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateSize);
+    };
+  }, [pageRatio]);
+
   if (error) {
     return (
-      <div className="flex min-h-[560px] flex-col items-center justify-center rounded-[2rem] border border-[#e4dbce] bg-[#fffdf8] p-6 text-center shadow-[var(--shadow-card)]">
+      <div className="flex min-h-[560px] flex-col items-center justify-center rounded-[2rem] border border-[#e4dbce] bg-white p-6 text-center shadow-[var(--shadow-card)]">
         <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-[#f3ede3]">
           <Maximize2 size={24} />
         </div>
@@ -55,41 +94,39 @@ export default function FlipbookViewer({ pdfUrl, title }: FlipbookViewerProps) {
   }
 
   return (
-    <div className="w-full">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="rounded-full bg-white/80 px-3 py-1.5 text-sm font-semibold text-[#666a61] shadow-sm">
-          Page {Math.min(page + 1, Math.max(numPages, 1))} of{" "}
-          {Math.max(numPages, 1)}
-        </p>
-        <a
-          href={pdfUrl}
-          className="inline-flex min-h-10 items-center gap-2 rounded-2xl border border-[#d9d0c2] bg-white/88 px-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-white"
-        >
-          <Expand size={16} />
-          Fullscreen
-        </a>
-      </div>
-
-      <div className="rounded-[2rem] border border-[#e4dbce] bg-[#fffdf8] p-3 shadow-[0_24px_70px_rgba(49,42,31,0.12)]">
+    <div className="flex h-full min-h-[100dvh] w-full flex-col overflow-hidden md:min-h-[58vh] md:overflow-visible">
+      <div
+        ref={frameRef}
+        className="flex flex-1 min-h-0 items-center justify-center overflow-hidden rounded-none border-0 bg-white p-0 md:flex-none md:min-h-[58vh] md:overflow-visible md:rounded-[1.4rem] md:border md:border-[#e4dbce] md:p-2 sm:rounded-[2rem] sm:p-3"
+      >
         <Document
           file={pdfUrl}
           loading={
-            <div className="flex min-h-[560px] items-center justify-center rounded-[1.5rem] bg-[#fbf7ef]">
+            <div className="flex h-full w-full items-center justify-center rounded-none bg-white md:min-h-[58vh] md:rounded-[1rem]">
               <Loader2 className="animate-spin text-[var(--green)]" size={30} />
             </div>
           }
           onLoadError={() => setError(true)}
-          onLoadSuccess={({ numPages: loadedPages }) => setNumPages(loadedPages)}
-        >
+          onLoadSuccess={async (pdf) => {
+            setNumPages(pdf.numPages);
+            const firstPage = await pdf.getPage(1);
+            const viewport = firstPage.getViewport({ scale: 1 });
+            const nextRatio = viewport.width / viewport.height;
+            if (Number.isFinite(nextRatio) && nextRatio > 0) {
+              setPageRatio(nextRatio);
+            }
+          }}
+        > 
           {numPages > 0 ? (
             <HTMLFlipBook
-              width={390}
-              height={550}
-              size="stretch"
-              minWidth={280}
-              maxWidth={500}
-              minHeight={420}
-              maxHeight={720}
+              ref={bookRef}
+              width={bookSize.width}
+              height={bookSize.height}
+              size="fixed"
+              minWidth={260}
+              maxWidth={980}
+              minHeight={320}
+              maxHeight={1400}
               showCover
               mobileScrollSupport
               className="mx-auto"
@@ -115,10 +152,17 @@ export default function FlipbookViewer({ pdfUrl, title }: FlipbookViewerProps) {
                 >
                   <Page
                     pageNumber={pageNumber}
-                    width={390}
+                    width={bookSize.width}
                     renderAnnotationLayer={false}
+                    renderTextLayer={false}
                     loading={
-                      <div className="flex h-full min-h-[520px] items-center justify-center bg-[#fbf7ef]">
+                      <div
+                        className="flex items-center justify-center bg-[#fbf7ef]"
+                        style={{
+                          width: bookSize.width,
+                          height: bookSize.height,
+                        }}
+                      >
                         <Loader2
                           className="animate-spin text-[var(--green)]"
                           size={22}
@@ -133,21 +177,29 @@ export default function FlipbookViewer({ pdfUrl, title }: FlipbookViewerProps) {
         </Document>
       </div>
 
-      <div className="mt-4 flex items-center justify-center gap-3">
+      <div className="flex flex-none items-center justify-center gap-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 sm:gap-3 sm:pb-0 sm:pt-3">
         <button
-          className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d9d0c2] bg-white transition hover:-translate-y-0.5 hover:bg-[#fbf7ef]"
-          onClick={() => setPage((current) => Math.max(0, current - 1))}
+          type="button"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#d9d0c2] bg-white transition hover:-translate-y-0.5 hover:bg-[#fbf7ef] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 sm:h-12 sm:w-12"
+          onClick={() => {
+            bookRef.current?.pageFlip?.()?.flipPrev?.();
+          }}
           aria-label="Previous page"
+          disabled={page <= 0}
         >
           <ChevronLeft size={20} />
         </button>
-        <p className="min-w-28 rounded-full bg-white/80 px-4 py-2 text-center text-sm font-semibold shadow-sm">
-          {title}
+        <p className="min-w-24 max-w-[52vw] truncate rounded-full bg-white/80 px-3 py-2 text-center text-sm font-semibold shadow-sm sm:min-w-28 sm:px-4">
+          {Math.min(page + 1, Math.max(numPages, 1))} of {Math.max(numPages, 1)}
         </p>
         <button
-          className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d9d0c2] bg-white transition hover:-translate-y-0.5 hover:bg-[#fbf7ef]"
-          onClick={() => setPage((current) => Math.min(numPages - 1, current + 1))}
+          type="button"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#d9d0c2] bg-white transition hover:-translate-y-0.5 hover:bg-[#fbf7ef] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 sm:h-12 sm:w-12"
+          onClick={() => {
+            bookRef.current?.pageFlip?.()?.flipNext?.();
+          }}
           aria-label="Next page"
+          disabled={page >= numPages - 1}
         >
           <ChevronRight size={20} />
         </button>
