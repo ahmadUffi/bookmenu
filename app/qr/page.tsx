@@ -10,6 +10,10 @@ import {
   Share2,
 } from "lucide-react";
 import QrCard from "@/components/menu/qr-card";
+import {
+  getOwnerRestaurants,
+  mapRestaurantMenus,
+} from "@/lib/restaurant-documents";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function QrPage() {
@@ -27,32 +31,17 @@ export default async function QrPage() {
     redirect("/login");
   }
 
-  const { data: restaurants } = await supabase
-    .from("restaurants")
-    .select(
-      "id, restaurant_name, slug, menus(id, title, pdf_url, thumbnail_url, is_active, created_at)",
-    )
-    .eq("owner_id", user.id);
+  const { data: restaurants, error: restaurantsError } =
+    await getOwnerRestaurants(supabase, user.id);
 
-  const menus = (restaurants ?? [])
-    .flatMap((restaurant) =>
-      (restaurant.menus ?? [])
-        .filter((menu) => menu.is_active)
-        .map((menu) => ({
-          id: menu.id,
-          restaurantName: restaurant.restaurant_name,
-          slug: restaurant.slug,
-          title: menu.title,
-          createdAt: menu.created_at,
-        })),
-    )
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+  if (restaurantsError) {
+    throw new Error(restaurantsError.message);
+  }
+
+  const menus = mapRestaurantMenus(restaurants).filter((menu) => menu.isActive);
 
   const menu = menus[0] ?? null;
-  const publicUrl = menu ? `/menu/${menu.slug}` : "/dashboard";
+  const publicUrl = menu ? `/menu/${menu.slug}/${menu.documentSlug}` : "/dashboard";
 
   return (
     <main className="min-h-screen bg-[var(--cream)] text-[var(--charcoal)]">
@@ -77,7 +66,7 @@ export default async function QrPage() {
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:px-8 lg:grid-cols-[360px_1fr]">
         <aside className="space-y-4">
           {menu ? (
-            <QrCard value={publicUrl} filename={`${menu.slug}-qr`} />
+            <QrCard value={publicUrl} filename={`${menu.slug}-${menu.documentSlug}-qr`} />
           ) : (
             <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm">
               <h2 className="font-semibold">No active document</h2>

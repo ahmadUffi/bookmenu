@@ -23,15 +23,18 @@ create table public.menus (
   id uuid primary key default gen_random_uuid(),
   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
   title text not null,
+  document_slug text not null,
   pdf_url text not null,
   thumbnail_url text,
   is_active boolean not null default true,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint menus_restaurant_document_slug_key unique (restaurant_id, document_slug)
 );
 
 create index restaurants_owner_id_idx on public.restaurants(owner_id);
 create index restaurants_slug_idx on public.restaurants(slug);
 create index menus_restaurant_id_idx on public.menus(restaurant_id);
+create index menus_restaurant_document_slug_idx on public.menus(restaurant_id, document_slug);
 create index menus_active_created_at_idx on public.menus(is_active, created_at desc);
 
 create or replace function private.slugify(input text)

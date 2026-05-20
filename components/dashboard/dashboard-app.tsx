@@ -64,17 +64,17 @@ export default function DashboardApp({
   );
   const notice = localMessage ?? message ?? error;
 
-  function publicUrl(slug: string) {
-    return `${window.location.origin}/menu/${slug}`;
+  function publicUrl(slug: string, documentSlug: string) {
+    return `${window.location.origin}/menu/${slug}/${documentSlug}`;
   }
 
-  async function copyUrl(slug: string) {
-    await navigator.clipboard.writeText(publicUrl(slug));
+  async function copyUrl(slug: string, documentSlug: string) {
+    await navigator.clipboard.writeText(publicUrl(slug, documentSlug));
     setLocalMessage("Public document URL copied.");
   }
 
   async function downloadQr(menu: MenuRecord) {
-    const dataUrl = await QRCode.toDataURL(publicUrl(menu.slug), {
+    const dataUrl = await QRCode.toDataURL(publicUrl(menu.slug, menu.documentSlug), {
       margin: 2,
       width: 900,
       color: {
@@ -368,10 +368,10 @@ export default function DashboardApp({
                                 </span>
                               </div>
                               <p className="mt-1 text-sm text-[#666a61]">
-                                {menu.restaurantName} - /menu/{menu.slug}
+                                {menu.restaurantName} - /menu/{menu.slug}/{menu.documentSlug}
                               </p>
                               <a
-                                href={`/menu/${menu.slug}`}
+                                href={`/menu/${menu.slug}/${menu.documentSlug}`}
                                 className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--green)] transition hover:text-[var(--green-dark)]"
                               >
                                 <LinkIcon size={15} />
@@ -382,7 +382,7 @@ export default function DashboardApp({
 
                           <div className="flex flex-wrap items-center gap-2">
                             <button
-                              onClick={() => copyUrl(menu.slug)}
+                              onClick={() => copyUrl(menu.slug, menu.documentSlug)}
                               className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#d9d0c2] bg-white px-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#fbf7ef]"
                             >
                               <Copy size={16} />

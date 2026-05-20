@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { getDocumentSlug } from "@/lib/document-slug";
 import { formatBytes, logoUploadConfig, uploadConfig } from "@/lib/config";
 import { slugify, uniqueSlug } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
@@ -54,6 +55,38 @@ async function requireUser() {
   }
 
   return { supabase, user };
+}
+
+async function createUniqueDocumentSlug(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  restaurantId: string,
+  title: string,
+) {
+  const baseSlug = slugify(title) || "document";
+  const { data, error } = await supabase
+    .from("menus")
+    .select("document_slug")
+    .eq("restaurant_id", restaurantId)
+    .like("document_slug", `${baseSlug}%`);
+
+  if (error) {
+    return slugify(title) || "document";
+  }
+
+  const existingSlugs = new Set(
+    (data ?? []).map((menu) => String(menu.document_slug)),
+  );
+
+  if (!existingSlugs.has(baseSlug)) {
+    return baseSlug;
+  }
+
+  let suffix = 2;
+  while (existingSlugs.has(`${baseSlug}-${suffix}`)) {
+    suffix += 1;
+  }
+
+  return `${baseSlug}-${suffix}`;
 }
 
 export async function uploadMenu(formData: FormData) {
@@ -116,8 +149,13 @@ export async function uploadMenu(formData: FormData) {
     restaurant = createdRestaurant;
   }
 
-  const cleanFileName = slugify(file.name.replace(/\.pdf$/i, "")) || "document";
-  const storagePath = `${user.id}/${restaurant.slug}-${Date.now()}-${cleanFileName}.pdf`;
+  const documentSlug = await createUniqueDocumentSlug(
+    supabase,
+    restaurant.id,
+    parsed.data.title,
+  );
+  const cleanFileName = slugify(file.name.replace(/\.pdf$/i, "")) || documentSlug;
+  const storagePath = `${user.id}/${restaurant.slug}/${documentSlug}-${Date.now()}-${cleanFileName}.pdf`;
 
   const { error: uploadError } = await supabase.storage
     .from(uploadConfig.bucket)
@@ -134,19 +172,49 @@ export async function uploadMenu(formData: FormData) {
     data: { publicUrl },
   } = supabase.storage.from(uploadConfig.bucket).getPublicUrl(storagePath);
 
-  const { error: menuError } = await supabase.from("menus").insert({
+  const menuPayload = {
     restaurant_id: restaurant.id,
     title: parsed.data.title,
+    document_slug: documentSlug,
     pdf_url: publicUrl,
     is_active: true,
-  });
+  };
+
+  const { data: createdMenu, error: menuError } = await supabase
+    .from("menus")
+    .insert(menuPayload)
+    .select("id, title, document_slug")
+    .single();
+
+  let publicDocumentSlug = documentSlug;
 
   if (menuError) {
-    dashboardError(menuError.message);
+    const { data: legacyMenu, error: legacyMenuError } = await supabase
+      .from("menus")
+      .insert({
+        restaurant_id: restaurant.id,
+        title: parsed.data.title,
+        pdf_url: publicUrl,
+        is_active: true,
+      })
+      .select("id, title")
+      .single();
+
+    if (legacyMenuError || !legacyMenu) {
+      dashboardError(legacyMenuError?.message ?? menuError.message);
+    }
+
+    publicDocumentSlug = getDocumentSlug({
+      id: legacyMenu.id,
+      title: legacyMenu.title,
+    });
+  } else if (createdMenu) {
+    publicDocumentSlug = getDocumentSlug(createdMenu);
   }
 
   revalidatePath("/dashboard");
   revalidatePath(`/menu/${restaurant.slug}`);
+  revalidatePath(`/menu/${restaurant.slug}/${publicDocumentSlug}`);
   redirect(`/dashboard?message=${encodeURIComponent("Document uploaded and published.")}`);
 }
 

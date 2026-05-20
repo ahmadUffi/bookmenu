@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import SettingsPanel from "@/components/dashboard/settings-panel";
-import type { MenuRecord } from "@/lib/menu-types";
+import { getOwnerRestaurant, mapRestaurantMenus } from "@/lib/restaurant-documents";
 import { createClient } from "@/lib/supabase/server";
 import { updateBusinessSettings } from "../actions";
 
@@ -36,34 +36,20 @@ export default async function DashboardSettingsPage(
     typeof searchParams.message === "string" ? searchParams.message : null;
   const error = typeof searchParams.error === "string" ? searchParams.error : null;
 
-  const { data: restaurant } = await supabase
-    .from("restaurants")
-    .select("id, restaurant_name, logo_url, slug, menus(id, title, pdf_url, thumbnail_url, is_active, created_at)")
-    .eq("owner_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const { data: restaurant, error: restaurantError } = await getOwnerRestaurant(
+    supabase,
+    user.id,
+  );
+
+  if (restaurantError) {
+    throw new Error(restaurantError.message);
+  }
 
   if (!restaurant) {
     redirect("/onboarding");
   }
 
-  const menus: MenuRecord[] = (restaurant.menus ?? [])
-    .map((menu) => ({
-      id: menu.id,
-      restaurantId: restaurant.id,
-      restaurantName: restaurant.restaurant_name,
-      slug: restaurant.slug,
-      title: menu.title,
-      pdfUrl: menu.pdf_url,
-      thumbnailUrl: menu.thumbnail_url,
-      isActive: menu.is_active,
-      createdAt: menu.created_at,
-    }))
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+  const menus = mapRestaurantMenus([restaurant]);
 
   return (
     <SettingsPanel

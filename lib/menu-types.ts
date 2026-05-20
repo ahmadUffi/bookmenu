@@ -3,6 +3,7 @@ export type MenuRecord = {
   restaurantName: string;
   restaurantId: string;
   slug: string;
+  documentSlug: string;
   title: string;
   pdfUrl: string;
   thumbnailUrl: string | null;
