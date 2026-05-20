@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f3eb;
-  --foreground: #1f211d;
-  --cream: #f7f3eb;
-  --paper: #fffdf8;
-  --charcoal: #1f211d;
-  --muted: #666a61;
-  --line: #e8e1d6;
-  --green: #426b4f;
-  --green-dark: #294733;
-  --green-soft: #e8efe8;
-  --shadow-soft: 0 18px 60px rgba(49, 42, 31, 0.08);
-  --shadow-card: 0 10px 30px rgba(49, 42, 31, 0.07);
+  --background: #f4f7fb;
+  --foreground: #151924;
+  --cream: #f4f7fb;
+  --paper: #ffffff;
+  --charcoal: #151924;
+  --muted: #5f6673;
+  --line: #dbe2ea;
+  --green: #0f766e;
+  --green-dark: #115e59;
+  --green-soft: #d9f2ef;
+  --shadow-soft: 0 18px 60px rgba(20, 24, 34, 0.08);
+  --shadow-card: 0 10px 30px rgba(20, 24, 34, 0.07);
 }
 
 @theme inline {
@@ -56,9 +56,49 @@ a {
 
 .mv-grid-bg {
   background-image:
-    linear-gradient(rgba(31, 33, 29, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(31, 33, 29, 0.045) 1px, transparent 1px);
+    linear-gradient(rgba(21, 25, 36, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(21, 25, 36, 0.045) 1px, transparent 1px);
   background-size: 36px 36px;
+}
+
+.mv-hero-surface {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(20, 184, 166, 0.38), transparent 30%),
+    radial-gradient(circle at 78% 10%, rgba(79, 70, 229, 0.34), transparent 28%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(17, 24, 39, 0.72)),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.08) 0,
+      rgba(255, 255, 255, 0.08) 1px,
+      transparent 1px,
+      transparent 46px
+    );
+}
+
+.dl-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e8eef5;
+}
+
+.dl-skeleton::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.72),
+    transparent
+  );
+  animation: dl-shimmer 1.35s infinite;
+}
+
+@keyframes dl-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

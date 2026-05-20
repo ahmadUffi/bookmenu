@@ -8,6 +8,6 @@ export function slugify(value: string) {
 }
 
 export function uniqueSlug(name: string) {
-  const base = slugify(name) || "restaurant-menu";
+  const base = slugify(name) || "document-showcase";
   return `${base}-${Math.random().toString(36).slice(2, 7)}`;
 }

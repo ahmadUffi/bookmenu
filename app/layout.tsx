@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MenuVerse",
+  title: "DocLume",
   description:
-    "Premium PDF menu publishing, flipbook viewing, and QR codes for restaurants.",
+    "Turn PDFs into polished web showcases with mobile viewing, share links, and QR codes.",
 };
 
 export default function RootLayout({

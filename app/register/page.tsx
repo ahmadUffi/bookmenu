@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ChefHat, Check, FileUp, QrCode, ShieldCheck, Sparkles } from "lucide-react";
+import { Check, FileText, FileUp, QrCode, ShieldCheck, Sparkles } from "lucide-react";
+import PendingSubmitButton from "@/components/ui/pending-submit-button";
 import { register } from "../login/actions";
 
 const authHighlights = [
@@ -23,9 +24,9 @@ export default async function RegisterPage(props: PageProps<"/register">) {
             <div className="relative z-10 flex min-h-[440px] flex-col justify-between">
               <Link href="/" className="inline-flex items-center gap-2 text-lg font-semibold">
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[var(--charcoal)]">
-                  <ChefHat size={19} />
+                  <FileText size={19} />
                 </span>
-                MenuVerse
+                DocLume
               </Link>
               <div className="max-w-md">
                 <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-[#dfe8dd]">
@@ -33,11 +34,11 @@ export default async function RegisterPage(props: PageProps<"/register">) {
                   Create workspace
                 </p>
                 <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
-                  Start publishing premium digital menus today.
+                  Start publishing polished PDF showcases today.
                 </h1>
                 <p className="mt-5 leading-7 text-white/68">
                   New accounts receive the user role. Your business name creates
-                  the public menu slug after email verification.
+                  the public document slug after email verification.
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
@@ -57,7 +58,7 @@ export default async function RegisterPage(props: PageProps<"/register">) {
                 <div>
                   <h2 className="text-2xl font-semibold tracking-tight">Register</h2>
                   <p className="mt-2 text-sm leading-6 text-[#666a61]">
-                    Create your restaurant owner account.
+                    Create your document workspace account.
                   </p>
                 </div>
                 <label className="mt-6 block text-sm font-semibold">
@@ -66,7 +67,7 @@ export default async function RegisterPage(props: PageProps<"/register">) {
                 </label>
                 <label className="mt-4 block text-sm font-semibold">
                   Business name
-                  <input required name="businessName" className="mt-2 min-h-12 w-full rounded-2xl border border-[#ded5c7] bg-[#fbf7ef] px-4 text-sm outline-none transition focus:border-[var(--green)] focus:bg-white focus:ring-4 focus:ring-[#426b4f]/15" placeholder="Warung Bromo" />
+                  <input required name="businessName" className="mt-2 min-h-12 w-full rounded-2xl border border-[#ded5c7] bg-[#fbf7ef] px-4 text-sm outline-none transition focus:border-[var(--green)] focus:bg-white focus:ring-4 focus:ring-[#426b4f]/15" placeholder="Acme Studio" />
                 </label>
                 <label className="mt-4 block text-sm font-semibold">
                   Email
@@ -76,10 +77,13 @@ export default async function RegisterPage(props: PageProps<"/register">) {
                   Password
                   <input required name="password" type="password" minLength={8} className="mt-2 min-h-12 w-full rounded-2xl border border-[#ded5c7] bg-[#fbf7ef] px-4 text-sm outline-none transition focus:border-[var(--green)] focus:bg-white focus:ring-4 focus:ring-[#426b4f]/15" placeholder="At least 8 characters" />
                 </label>
-                <button className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--green)] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--green-dark)]">
+                <PendingSubmitButton
+                  className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--green)] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--green-dark)]"
+                  pendingText="Creating account"
+                >
                   Create account
                   <Check size={17} />
-                </button>
+                </PendingSubmitButton>
               </form>
               <p className="mt-5 text-center text-sm text-[#666a61]">
                 Already have an account?{" "}

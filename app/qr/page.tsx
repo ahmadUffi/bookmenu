@@ -61,7 +61,7 @@ export default async function QrPage() {
           <div>
             <p className="text-sm font-semibold text-[var(--green)]">QR code page</p>
             <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-              Printable table cards
+              Printable share cards
             </h1>
           </div>
           <Link
@@ -80,9 +80,9 @@ export default async function QrPage() {
             <QrCard value={publicUrl} filename={`${menu.slug}-qr`} />
           ) : (
             <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm">
-              <h2 className="font-semibold">No active menu</h2>
+              <h2 className="font-semibold">No active document</h2>
               <p className="mt-2 text-sm leading-6 text-[#666a61]">
-                Upload a PDF menu from the dashboard to generate a QR code.
+                Upload a PDF document from the dashboard to generate a QR code.
               </p>
             </div>
           )}
@@ -113,11 +113,11 @@ export default async function QrPage() {
                 Printable layout
               </p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                Table QR preview
+                Share QR preview
               </h2>
               <p className="mt-3 max-w-xl text-sm leading-6 text-[#666a61]">
-                A clean card restaurant teams can print, laminate, or place into
-                table tents.
+                A clean card teams can print, laminate, place on counters, or
+                include in campaign material.
               </p>
             </div>
             <button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--charcoal)] px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5">
@@ -135,7 +135,7 @@ export default async function QrPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold text-[var(--green)]">
-                      {menu?.restaurantName ?? "Your restaurant"}
+                      {menu?.restaurantName ?? "Your workspace"}
                     </p>
                     <h3 className="mt-1 text-2xl font-semibold">Table {table}</h3>
                   </div>
@@ -157,7 +157,7 @@ export default async function QrPage() {
                 </div>
                 <div className="mt-6 flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold">
                   <Check size={17} className="text-[var(--green)]" />
-                  Scan to open the digital menu
+                  Scan to open the digital document
                 </div>
               </article>
             ))}

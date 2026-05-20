@@ -64,13 +64,13 @@ export async function uploadMenu(formData: FormData) {
   });
 
   if (!parsed.success) {
-    dashboardError("Restaurant name and menu title are required.");
+    dashboardError("Business name and document title are required.");
   }
 
   const file = formData.get("pdf");
 
   if (!(file instanceof File) || file.size === 0) {
-    dashboardError("Choose a PDF menu before uploading.");
+    dashboardError("Choose a PDF document before uploading.");
   }
 
   if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
@@ -109,14 +109,14 @@ export async function uploadMenu(formData: FormData) {
 
     if (createRestaurantError || !createdRestaurant) {
       dashboardError(
-        createRestaurantError?.message ?? "Unable to create restaurant profile.",
+        createRestaurantError?.message ?? "Unable to create workspace profile.",
       );
     }
 
     restaurant = createdRestaurant;
   }
 
-  const cleanFileName = slugify(file.name.replace(/\.pdf$/i, "")) || "menu";
+  const cleanFileName = slugify(file.name.replace(/\.pdf$/i, "")) || "document";
   const storagePath = `${user.id}/${restaurant.slug}-${Date.now()}-${cleanFileName}.pdf`;
 
   const { error: uploadError } = await supabase.storage
@@ -147,7 +147,7 @@ export async function uploadMenu(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath(`/menu/${restaurant.slug}`);
-  redirect(`/dashboard?message=${encodeURIComponent("Menu uploaded and published.")}`);
+  redirect(`/dashboard?message=${encodeURIComponent("Document uploaded and published.")}`);
 }
 
 export async function updateBusinessSettings(formData: FormData) {
@@ -173,7 +173,7 @@ export async function updateBusinessSettings(formData: FormData) {
   }
 
   if (!restaurant) {
-    dashboardError("Restaurant profile not found.");
+    dashboardError("Business profile not found.");
   }
 
   const logoFile = formData.get("logo");
@@ -247,7 +247,7 @@ export async function deleteMenu(formData: FormData) {
   const storageUrl = String(formData.get("storageUrl") ?? "");
 
   if (!menuId) {
-    dashboardError("Menu id is required.");
+    dashboardError("Document id is required.");
   }
 
   const storagePath = getStoragePath(storageUrl, uploadConfig.bucket);
@@ -263,5 +263,5 @@ export async function deleteMenu(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
-  redirect(`/dashboard?message=${encodeURIComponent("Menu deleted.")}`);
+  redirect(`/dashboard?message=${encodeURIComponent("Document deleted.")}`);
 }

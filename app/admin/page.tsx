@@ -6,7 +6,7 @@ import {
   MoreHorizontal,
   Search,
   ShieldCheck,
-  Store,
+  FileText,
   UploadCloud,
   Users,
 } from "lucide-react";
@@ -49,7 +49,7 @@ export default async function AdminPage() {
       id: restaurant.id,
       name: restaurant.restaurant_name,
       slug: restaurant.slug,
-      status: activeMenus > 0 ? "Active" : "No active menu",
+      status: activeMenus > 0 ? "Active" : "No active document",
       menuCount: menus.length,
     };
   });
@@ -63,7 +63,7 @@ export default async function AdminPage() {
           <div>
             <p className="text-sm font-semibold text-[var(--green)]">Admin dashboard</p>
             <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-              Restaurant management
+              Workspace management
             </h1>
           </div>
           <Link
@@ -79,8 +79,8 @@ export default async function AdminPage() {
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
         <div className="grid gap-4 md:grid-cols-4">
           {[
-            ["Restaurants", rows.length.toString(), Store],
-            ["Menus", activeMenuCount.toString(), UploadCloud],
+            ["Workspaces", rows.length.toString(), FileText],
+            ["Documents", activeMenuCount.toString(), UploadCloud],
             ["Owners", rows.length.toString(), Users],
             ["Moderation", "0", ShieldCheck],
           ].map(([label, value, Icon]) => (
@@ -102,17 +102,17 @@ export default async function AdminPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight">
-                  Menu moderation
+                  Document moderation
                 </h2>
                 <p className="mt-1 text-sm text-[#666a61]">
-                  Review restaurant profiles, menu status, and scan health.
+                  Review workspace profiles, document status, and scan health.
                 </p>
               </div>
               <label className="flex min-h-11 items-center gap-2 rounded-2xl border border-[#ded5c7] bg-[#fbf7ef] px-4 text-sm font-semibold text-[#666a61]">
                 <Search size={17} />
                 <input
                   className="w-full bg-transparent outline-none placeholder:text-[#8a8d84]"
-                  placeholder="Search restaurants"
+                  placeholder="Search workspaces"
                 />
               </label>
             </div>
@@ -122,10 +122,10 @@ export default async function AdminPage() {
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="bg-[#fbf7ef] text-xs uppercase tracking-[0.14em] text-[#777a72]">
                 <tr>
-                  <th className="px-5 py-4 font-semibold">Restaurant</th>
+                  <th className="px-5 py-4 font-semibold">Workspace</th>
                   <th className="px-5 py-4 font-semibold">Slug</th>
                   <th className="px-5 py-4 font-semibold">Status</th>
-                  <th className="px-5 py-4 font-semibold">Menus</th>
+                  <th className="px-5 py-4 font-semibold">Documents</th>
                   <th className="px-5 py-4 font-semibold">Analytics</th>
                   <th className="px-5 py-4 font-semibold">Actions</th>
                 </tr>
@@ -148,7 +148,7 @@ export default async function AdminPage() {
                       </span>
                     </td>
                     <td className="px-5 py-4 text-[#666a61]">
-                      {restaurant.menuCount} menu{restaurant.menuCount === 1 ? "" : "s"}
+                      {restaurant.menuCount} document{restaurant.menuCount === 1 ? "" : "s"}
                     </td>
                     <td className="px-5 py-4 text-[#666a61]">Not tracked</td>
                     <td className="px-5 py-4">

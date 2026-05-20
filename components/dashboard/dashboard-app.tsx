@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import QRCode from "qrcode";
 import {
   BarChart3,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { formatBytes, uploadConfig } from "@/lib/config";
 import type { MenuRecord } from "@/lib/menu-types";
+import PendingSubmitButton from "@/components/ui/pending-submit-button";
 
 type DashboardAppProps = {
   deleteMenuAction: (formData: FormData) => void;
@@ -33,6 +35,7 @@ const navItems = [
   { label: "Overview", icon: Home, href: "#overview" },
   { label: "QR codes", icon: QrCode, href: "/qr" },
   { label: "Settings", icon: Sparkles, href: "/dashboard/settings" },
+  { label: "Landing page", icon: FileText, href: "/" },
 ];
 
 export default function DashboardApp({
@@ -45,7 +48,7 @@ export default function DashboardApp({
 }: DashboardAppProps) {
   const menus = initialMenus;
   const restaurantName = initialBusinessName || initialMenus[0]?.restaurantName || "";
-  const [menuTitle, setMenuTitle] = useState("All Day Menu");
+  const [menuTitle, setMenuTitle] = useState("Product Catalog");
   const [localMessage, setLocalMessage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -67,7 +70,7 @@ export default function DashboardApp({
 
   async function copyUrl(slug: string) {
     await navigator.clipboard.writeText(publicUrl(slug));
-    setLocalMessage("Public menu URL copied.");
+    setLocalMessage("Public document URL copied.");
   }
 
   async function downloadQr(menu: MenuRecord) {
@@ -104,22 +107,22 @@ export default function DashboardApp({
   }
 
   return (
-    <main className="min-h-screen bg-[var(--cream)] text-[var(--charcoal)]">
-      <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-        <aside className="hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 backdrop-blur lg:block">
+    <main className="h-screen overflow-hidden bg-[var(--cream)] text-[var(--charcoal)]">
+      <div className="grid h-screen lg:grid-cols-[280px_1fr]">
+        <aside className="hidden h-screen overflow-hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 backdrop-blur lg:block">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--charcoal)] text-white">
               <Sparkles size={19} />
             </div>
             <div>
-              <p className="font-semibold tracking-tight">MenuVerse</p>
-              <p className="text-xs font-medium text-[#73766e]">Restaurant OS</p>
+              <p className="font-semibold tracking-tight">DocLume</p>
+              <p className="text-xs font-medium text-[#73766e]">Document OS</p>
             </div>
           </div>
 
           <nav className="mt-9 space-y-1">
             {navItems.map((item, index) => (
-              <a
+              <Link
                 key={item.label}
                 href={item.href}
                 className={`flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold transition ${
@@ -130,7 +133,7 @@ export default function DashboardApp({
               >
                 <item.icon size={18} />
                 {item.label}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -142,12 +145,12 @@ export default function DashboardApp({
           </div>
         </aside>
 
-        <section>
+        <section className="h-screen min-h-0 overflow-y-auto">
           <header className="sticky top-0 z-30 border-b border-[#e4dbce] bg-[#f7f3eb]/88 px-4 py-4 backdrop-blur-xl md:px-8">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-[var(--green)]">
-                  Restaurant dashboard
+                  Document workspace
                 </p>
                 <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
                   {restaurantName}
@@ -167,8 +170,8 @@ export default function DashboardApp({
             <div id="overview" className="scroll-mt-28">
               <div className="grid gap-4 md:grid-cols-3">
                 {[
-                  ["Active menus", activeMenus.length.toString(), FileCheck2],
-                  ["Restaurants", restaurantCount.toString(), QrCode],
+                  ["Active documents", activeMenus.length.toString(), FileCheck2],
+                  ["Workspaces", restaurantCount.toString(), QrCode],
                   ["Published links", menus.length.toString(), BarChart3],
                 ].map(([label, value, Icon]) => (
                   <div
@@ -200,7 +203,7 @@ export default function DashboardApp({
                         <Upload size={21} />
                       </div>
                       <div>
-                        <h2 className="font-semibold">Upload PDF menu</h2>
+                        <h2 className="font-semibold">Upload PDF document</h2>
                         <p className="text-sm text-[#666a61]">
                           Limit {formatBytes(uploadConfig.maxPdfBytes)}
                         </p>
@@ -212,7 +215,7 @@ export default function DashboardApp({
                       value={restaurantName}
                     />
                     <label className="mt-4 block text-sm font-semibold">
-                      Menu title
+                      Document title
                       <input
                         name="title"
                         value={menuTitle}
@@ -259,7 +262,7 @@ export default function DashboardApp({
                         Drop PDF here or tap to browse
                       </p>
                       <p className="mt-1 text-xs text-[#777a72]">
-                        PDF only, mobile menu pages render in the public viewer.
+                        PDF only. Pages render in the public showcase viewer.
                       </p>
                       {selectedFile ? (
                         <div className="mt-4 w-full rounded-2xl border border-[#e1d8ca] bg-white p-3 text-left">
@@ -280,16 +283,19 @@ export default function DashboardApp({
                       ) : null}
                     </label>
 
-                    <button className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--green)] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--green-dark)]">
+                    <PendingSubmitButton
+                      className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--green)] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--green-dark)]"
+                      pendingText="Uploading"
+                    >
                       <Upload size={17} />
-                      Upload menu
-                    </button>
+                      Upload document
+                    </PendingSubmitButton>
                   </form>
 
                   <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm">
                     <h2 className="font-semibold">QR management</h2>
                     <p className="mt-2 text-sm leading-6 text-[#666a61]">
-                      Download a QR for each active menu or copy the public link
+                      Download a QR for each active document or copy the public link
                       for sharing channels.
                     </p>
                     <a
@@ -307,10 +313,10 @@ export default function DashboardApp({
                     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
                       <div>
                         <h2 className="text-xl font-semibold tracking-tight">
-                          Uploaded menus
+                          Uploaded documents
                         </h2>
                         <p className="mt-1 text-sm text-[#666a61]">
-                          {activeMenus.length} active public menu
+                          {activeMenus.length} active public document
                           {activeMenus.length === 1 ? "" : "s"}
                         </p>
                       </div>
@@ -326,7 +332,7 @@ export default function DashboardApp({
                         </p>
                       ) : (
                         <p className="rounded-2xl border border-[#e4dbce] bg-[#fbf7ef] px-3 py-2 text-sm font-medium text-[#666a61]">
-                          Data synced with Supabase.
+                          Documents synced with Supabase.
                         </p>
                       )}
                     </div>
@@ -338,9 +344,9 @@ export default function DashboardApp({
                         <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-[#f3ede3]">
                           <FileText size={24} />
                         </div>
-                        <h3 className="mt-5 text-lg font-semibold">No menus yet</h3>
+                        <h3 className="mt-5 text-lg font-semibold">No documents yet</h3>
                         <p className="mt-2 max-w-sm text-sm leading-6 text-[#666a61]">
-                          Upload a PDF to create the first public menu and QR code.
+                          Upload a PDF to create the first public showcase and QR code.
                         </p>
                       </div>
                     ) : (
@@ -369,7 +375,7 @@ export default function DashboardApp({
                                 className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--green)] transition hover:text-[var(--green-dark)]"
                               >
                                 <LinkIcon size={15} />
-                                Open public menu
+                                Open public document
                               </a>
                             </div>
                           </div>
@@ -396,10 +402,13 @@ export default function DashboardApp({
                                 type="hidden"
                                 value={menu.pdfUrl}
                               />
-                              <button className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 text-sm font-semibold text-red-700 transition hover:-translate-y-0.5 hover:bg-red-50">
+                              <PendingSubmitButton
+                                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 text-sm font-semibold text-red-700 transition hover:-translate-y-0.5 hover:bg-red-50"
+                                pendingText="Deleting"
+                              >
                                 <Trash2 size={16} />
                                 Delete
-                              </button>
+                              </PendingSubmitButton>
                             </form>
                           </div>
                         </article>

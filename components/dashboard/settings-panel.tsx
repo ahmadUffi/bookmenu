@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   BarChart3,
   CheckCircle2,
   FileCheck2,
+  FileText,
   Home,
   LogOut,
   QrCode,
@@ -13,6 +15,7 @@ import {
 } from "lucide-react";
 import { formatBytes, logoUploadConfig, uploadConfig } from "@/lib/config";
 import type { MenuRecord } from "@/lib/menu-types";
+import PendingSubmitButton from "@/components/ui/pending-submit-button";
 
 type SettingsPanelProps = {
   error: string | null;
@@ -55,41 +58,48 @@ export default function SettingsPanel({
   }
 
   return (
-    <main className="min-h-screen bg-[var(--cream)] text-[var(--charcoal)]">
-      <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-        <aside className="hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 backdrop-blur lg:block">
+    <main className="h-screen overflow-hidden bg-[var(--cream)] text-[var(--charcoal)]">
+      <div className="grid h-screen lg:grid-cols-[280px_1fr]">
+        <aside className="hidden h-screen overflow-hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 backdrop-blur lg:block">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--charcoal)] text-white">
               <Sparkles size={19} />
             </div>
             <div>
-              <p className="font-semibold tracking-tight">MenuVerse</p>
-              <p className="text-xs font-medium text-[#73766e]">Restaurant OS</p>
+              <p className="font-semibold tracking-tight">DocLume</p>
+              <p className="text-xs font-medium text-[#73766e]">Document OS</p>
             </div>
           </div>
 
           <nav className="mt-9 space-y-1">
-            <a
+            <Link
               href="/dashboard"
               className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
             >
               <Home size={18} />
               Overview
-            </a>
-            <a
+            </Link>
+            <Link
               href="/qr"
               className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
             >
               <QrCode size={18} />
               QR codes
-            </a>
-            <a
+            </Link>
+            <Link
               href="/dashboard/settings"
               className="flex min-h-11 w-full items-center gap-3 rounded-2xl bg-[var(--charcoal)] px-3 text-left text-sm font-semibold text-white shadow-[0_14px_30px_rgba(31,33,29,0.16)]"
             >
               <Sparkles size={18} />
               Settings
-            </a>
+            </Link>
+            <Link
+              href="/"
+              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
+            >
+              <FileText size={18} />
+              Landing page
+            </Link>
           </nav>
 
           <div className="mt-8 rounded-3xl border border-[#e4dbce] bg-[#f8f3eb] p-4">
@@ -100,12 +110,12 @@ export default function SettingsPanel({
           </div>
         </aside>
 
-        <section>
+        <section className="h-screen min-h-0 overflow-y-auto">
           <header className="sticky top-0 z-30 border-b border-[#e4dbce] bg-[#f7f3eb]/88 px-4 py-4 backdrop-blur-xl md:px-8">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-[var(--green)]">
-                  Restaurant dashboard
+                  Document workspace
                 </p>
                 <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
                   {initialBusinessName}
@@ -130,8 +140,8 @@ export default function SettingsPanel({
 
             <div className="grid gap-4 md:grid-cols-3">
               {[
-                ["Active menus", activeMenus.length.toString(), FileCheck2],
-                ["Restaurants", restaurantCount.toString(), QrCode],
+                ["Active documents", activeMenus.length.toString(), FileCheck2],
+                ["Workspaces", restaurantCount.toString(), QrCode],
                 ["Published links", initialMenus.length.toString(), BarChart3],
               ].map(([label, value, Icon]) => (
                 <div
@@ -163,7 +173,7 @@ export default function SettingsPanel({
                       Business profile
                     </h2>
                     <p className="mt-1 text-sm text-[#666a61]">
-                      Edit the restaurant name and logo shown across the app.
+                      Edit the workspace name and logo shown across the app.
                     </p>
                   </div>
                   <div className="hidden h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-[#e4dbce] bg-[#fbf7ef] md:flex">
@@ -171,7 +181,7 @@ export default function SettingsPanel({
                       <div
                         className="h-full w-full bg-cover bg-center"
                         style={{ backgroundImage: `url(${logoPreviewUrl})` }}
-                        aria-label="Restaurant logo"
+                        aria-label="Workspace logo"
                       />
                     ) : (
                       <Sparkles size={20} className="text-[var(--green)]" />
@@ -180,12 +190,12 @@ export default function SettingsPanel({
                 </div>
 
                 <label className="mt-6 block text-sm font-semibold">
-                  Restaurant name
+                  Workspace name
                   <input
                     name="businessName"
                     value={businessName}
                     onChange={(event) => setBusinessName(event.target.value)}
-                    placeholder="Warung Bromo"
+                    placeholder="Acme Studio"
                     className="mt-2 min-h-12 w-full rounded-2xl border border-[#ded5c7] bg-[#fbf7ef] px-4 outline-none transition focus:border-[var(--green)] focus:bg-white focus:ring-4 focus:ring-[#426b4f]/15"
                     required
                   />
@@ -230,10 +240,13 @@ export default function SettingsPanel({
                   </div>
                 </div>
 
-                <button className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--green)] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--green-dark)]">
+                <PendingSubmitButton
+                  className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--green)] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--green-dark)]"
+                  pendingText="Saving"
+                >
                   <Upload size={17} />
                   Save settings
-                </button>
+                </PendingSubmitButton>
               </form>
 
               <section className="space-y-5">
@@ -249,7 +262,7 @@ export default function SettingsPanel({
                     </p>
                     <p className="mt-2 text-lg font-semibold">Starter</p>
                     <p className="mt-1 text-sm text-[#666a61]">
-                      Perfect for getting the menu live. Billing upgrades can
+                      Perfect for getting the first document live. Billing upgrades can
                       be connected here later.
                     </p>
                   </div>

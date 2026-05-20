@@ -65,5 +65,5 @@ export async function createBusinessProfile(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
-  redirect("/dashboard?message=Business%20profile%20created");
+  redirect("/dashboard?message=Workspace%20profile%20created");
 }

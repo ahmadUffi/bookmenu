@@ -38,6 +38,12 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
     () => Array.from({ length: numPages }, (_, index) => index + 1),
     [numPages],
   );
+  const renderedPages = useMemo(() => {
+    const currentPage = page + 1;
+    return new Set(
+      pages.filter((pageNumber) => Math.abs(pageNumber - currentPage) <= 2),
+    );
+  }, [page, pages]);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -58,7 +64,11 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
       const widthByHeight = Math.floor(vh * pageRatio);
       const nextWidth = Math.max(260, Math.min(vw, widthByHeight, 980));
       const nextHeight = Math.floor(nextWidth / pageRatio);
-      setBookSize({ width: nextWidth, height: nextHeight });
+      setBookSize((current) =>
+        current.width === nextWidth && current.height === nextHeight
+          ? current
+          : { width: nextWidth, height: nextHeight },
+      );
     };
 
     updateSize();
@@ -80,7 +90,7 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
         </div>
         <h2 className="mt-5 text-xl font-semibold">PDF preview unavailable</h2>
         <p className="mt-2 max-w-md text-sm leading-6 text-[#666a61]">
-          The PDF could not be rendered in the flipbook viewer. You can still
+          The PDF could not be rendered in the showcase viewer. You can still
           open the uploaded file directly.
         </p>
         <a
@@ -108,6 +118,8 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
           }
           onLoadError={() => setError(true)}
           onLoadSuccess={async (pdf) => {
+            setError(false);
+            setPage(0);
             setNumPages(pdf.numPages);
             const firstPage = await pdf.getPage(1);
             const viewport = firstPage.getViewport({ scale: 1 });
@@ -150,26 +162,36 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
                   key={pageNumber}
                   className="overflow-hidden rounded-xl bg-white shadow-xl"
                 >
-                  <Page
-                    pageNumber={pageNumber}
-                    width={bookSize.width}
-                    renderAnnotationLayer={false}
-                    renderTextLayer={false}
-                    loading={
-                      <div
-                        className="flex items-center justify-center bg-[#fbf7ef]"
-                        style={{
-                          width: bookSize.width,
-                          height: bookSize.height,
-                        }}
-                      >
-                        <Loader2
-                          className="animate-spin text-[var(--green)]"
-                          size={22}
-                        />
-                      </div>
-                    }
-                  />
+                  {renderedPages.has(pageNumber) ? (
+                    <Page
+                      pageNumber={pageNumber}
+                      width={bookSize.width}
+                      renderAnnotationLayer={false}
+                      renderTextLayer={false}
+                      loading={
+                        <div
+                          className="flex items-center justify-center bg-[#f8fafc]"
+                          style={{
+                            width: bookSize.width,
+                            height: bookSize.height,
+                          }}
+                        >
+                          <Loader2
+                            className="animate-spin text-[var(--green)]"
+                            size={22}
+                          />
+                        </div>
+                      }
+                    />
+                  ) : (
+                    <div
+                      className="bg-[#f8fafc]"
+                      style={{
+                        width: bookSize.width,
+                        height: bookSize.height,
+                      }}
+                    />
+                  )}
                 </div>
               ))}
             </HTMLFlipBook>
