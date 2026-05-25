@@ -101,6 +101,70 @@ a {
   }
 }
 
+.qr-print-sheet-4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.qr-print-sheet-6 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  column-gap: 0.75rem;
+  row-gap: clamp(1.75rem, 3.5vw, 2.5rem);
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 210mm;
+    min-height: 297mm;
+    background: white !important;
+  }
+
+  .qr-print-hide {
+    display: none !important;
+  }
+
+  .qr-print-area {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .qr-print-sheet {
+    width: 210mm !important;
+    height: 297mm !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 8mm !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .qr-print-sheet-6 {
+    column-gap: 4mm !important;
+    row-gap: 8mm !important;
+  }
+
+  .qr-print-sheet:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .qr-print-card {
+    border-radius: 8px !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
