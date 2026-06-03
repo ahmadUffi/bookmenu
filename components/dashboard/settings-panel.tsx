@@ -1,19 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   BarChart3,
   CheckCircle2,
   FileCheck2,
-  FileText,
-  Home,
-  LogOut,
   QrCode,
   Sparkles,
   Upload,
 } from "lucide-react";
-import { formatBytes, logoUploadConfig, uploadConfig } from "@/lib/config";
+import { formatBytes, logoUploadConfig } from "@/lib/config";
 import type { MenuRecord } from "@/lib/menu-types";
 import PendingSubmitButton from "@/components/ui/pending-submit-button";
 
@@ -58,80 +54,7 @@ export default function SettingsPanel({
   }
 
   return (
-    <main className="h-screen overflow-hidden bg-[var(--cream)] text-[var(--charcoal)]">
-      <div className="grid h-screen lg:grid-cols-[280px_1fr]">
-        <aside className="hidden h-screen overflow-hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 backdrop-blur lg:block">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--charcoal)] text-white">
-              <Sparkles size={19} />
-            </div>
-            <div>
-              <p className="font-semibold tracking-tight">DocLume</p>
-              <p className="text-xs font-medium text-[#73766e]">Document OS</p>
-            </div>
-          </div>
-
-          <nav className="mt-9 space-y-1">
-            <Link
-              href="/dashboard"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
-            >
-              <Home size={18} />
-              Overview
-            </Link>
-            <Link
-              href="/qr"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
-            >
-              <QrCode size={18} />
-              QR codes
-            </Link>
-            <Link
-              href="/dashboard/settings"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl bg-[var(--charcoal)] px-3 text-left text-sm font-semibold text-white shadow-[0_14px_30px_rgba(31,33,29,0.16)]"
-            >
-              <Sparkles size={18} />
-              Settings
-            </Link>
-            <Link
-              href="/"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
-            >
-              <FileText size={18} />
-              Landing page
-            </Link>
-          </nav>
-
-          <div className="mt-8 rounded-3xl border border-[#e4dbce] bg-[#f8f3eb] p-4">
-            <p className="text-sm font-semibold">Storage status</p>
-            <p className="mt-2 text-sm leading-6 text-[#666a61]">
-              Files stored in {uploadConfig.storageProvider} bucket {uploadConfig.bucket}.
-            </p>
-          </div>
-        </aside>
-
-        <section className="h-screen min-h-0 overflow-y-auto">
-          <header className="sticky top-0 z-30 border-b border-[#e4dbce] bg-[#f7f3eb]/88 px-4 py-4 backdrop-blur-xl md:px-8">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-[var(--green)]">
-                  Document workspace
-                </p>
-                <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-                  {initialBusinessName}
-                </h1>
-              </div>
-              <a
-                href="/auth/logout"
-                className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#d9d0c2] bg-white/70 px-4 text-sm font-semibold text-[#4d5149] transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                <LogOut size={16} />
-                Logout
-              </a>
-            </div>
-          </header>
-
-          <div className="px-4 py-6 md:px-8 md:py-8">
+    <div className="px-4 py-6 md:px-8 md:py-8">
             {notice ? (
               <p className="mb-4 rounded-2xl border border-[#cfe1cf] bg-[#eef6ed] px-3 py-2 text-sm font-medium text-[var(--green-dark)]">
                 {notice}
@@ -293,9 +216,6 @@ export default function SettingsPanel({
                 </div>
               </section>
             </div>
-          </div>
-        </section>
-      </div>
-    </main>
+    </div>
   );
 }
