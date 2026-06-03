@@ -29,7 +29,12 @@ const navItems = [
     icon: Sparkles,
     href: "/dashboard/settings",
   },
-  { key: "billing", label: "Billing", icon: CreditCard, href: "/dashboard/billing" },
+  {
+    key: "billing",
+    label: "Billing",
+    icon: CreditCard,
+    href: "/dashboard/billing",
+  },
   { key: "landing", label: "Landing page", icon: FileText, href: "/" },
 ] as const;
 
@@ -61,7 +66,11 @@ export default function DashboardShell({
           : "overview";
 
   const eyebrow =
-    active === "qr" ? "QR print studio" : active === "billing" ? "Billing" : "Document workspace";
+    active === "qr"
+      ? "QR print studio"
+      : active === "billing"
+        ? "Billing"
+        : "Document workspace";
 
   return (
     <main className="dashboard-shell-root h-screen overflow-hidden bg-[var(--cream)] text-[var(--charcoal)]">
