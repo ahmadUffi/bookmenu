@@ -115,7 +115,9 @@ function escapeSvgText(value: string) {
 }
 
 function clampText(value: string, maxLength: number) {
-  return value.length > maxLength ? `${value.slice(0, maxLength - 1)}...` : value;
+  return value.length > maxLength
+    ? `${value.slice(0, maxLength - 1)}...`
+    : value;
 }
 
 function svgText(
@@ -260,7 +262,13 @@ export async function downloadPrintTemplatePng({
   text: PrintTemplateText;
 }) {
   const image = new Image();
-  const svg = getPrintTemplateSvg({ design, menu, publicUrl, templateId, text });
+  const svg = getPrintTemplateSvg({
+    design,
+    menu,
+    publicUrl,
+    templateId,
+    text,
+  });
   const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
   await new Promise<void>((resolve, reject) => {
@@ -293,7 +301,10 @@ function TemplateText({
   style?: CSSProperties;
 }) {
   return (
-    <p className={`min-w-0 break-words text-center leading-tight ${className}`} style={style}>
+    <p
+      className={`min-w-0 break-words text-center leading-tight ${className}`}
+      style={style}
+    >
       {children}
     </p>
   );
@@ -348,7 +359,10 @@ export function PrintTemplateCard({
       <div className="qr-template-card relative flex aspect-[5/7] h-full w-full flex-col items-center bg-[#f6e8e0] p-[6%] text-[#5a2012]">
         <TemplateText
           className="font-black uppercase"
-          style={{ fontFamily: "Impact, Arial Black, sans-serif", fontSize: "clamp(2rem, 16cqw, 5.2rem)" }}
+          style={{
+            fontFamily: "Impact, Arial Black, sans-serif",
+            fontSize: "clamp(2rem, 16cqw, 5.2rem)",
+          }}
         >
           {text.headline}
         </TemplateText>
@@ -364,7 +378,11 @@ export function PrintTemplateCard({
           <span className="absolute right-[4%] top-[4%] h-[13%] w-[13%] border-r-2 border-t-2 border-[#5a2012]" />
           <span className="absolute bottom-[4%] left-[4%] h-[13%] w-[13%] border-b-2 border-l-2 border-[#5a2012]" />
           <span className="absolute bottom-[4%] right-[4%] h-[13%] w-[13%] border-b-2 border-r-2 border-[#5a2012]" />
-          <StyledQrCode value={publicUrl} design={design} className="aspect-square w-[78%]" />
+          <StyledQrCode
+            value={publicUrl}
+            design={design}
+            className="aspect-square w-[78%]"
+          />
           <TemplateText className="absolute bottom-[14%] text-[clamp(.65rem,3.5cqw,1.1rem)] font-bold">
             {text.caption}
           </TemplateText>
@@ -384,7 +402,10 @@ export function PrintTemplateCard({
         <div className="mt-[15%] w-full">
           <TemplateText
             className="font-black uppercase"
-            style={{ fontFamily: "Comic Sans MS, Trebuchet MS, sans-serif", fontSize: "clamp(1.4rem, 10cqw, 3.2rem)" }}
+            style={{
+              fontFamily: "Comic Sans MS, Trebuchet MS, sans-serif",
+              fontSize: "clamp(1.4rem, 10cqw, 3.2rem)",
+            }}
           >
             {text.headline}
           </TemplateText>
@@ -393,7 +414,11 @@ export function PrintTemplateCard({
           </TemplateText>
         </div>
         <div className="mt-[8%] flex w-[76%] items-center justify-center rounded-2xl bg-black p-[9%]">
-          <StyledQrCode value={publicUrl} design={design} className="aspect-square w-full" />
+          <StyledQrCode
+            value={publicUrl}
+            design={design}
+            className="aspect-square w-full"
+          />
         </div>
         <TemplateText className="mt-[8%] text-[clamp(.6rem,3.4cqw,1rem)] font-black">
           {text.caption}
@@ -416,7 +441,11 @@ export function PrintTemplateCard({
           {text.headline}
         </TemplateText>
         <div className="relative mt-[10%] w-[74%] rounded-2xl border-2 border-[#f45a2a] bg-[#fff8df] p-[6%]">
-          <StyledQrCode value={publicUrl} design={design} className="aspect-square w-full" />
+          <StyledQrCode
+            value={publicUrl}
+            design={design}
+            className="aspect-square w-full"
+          />
         </div>
         <TemplateText className="relative mt-auto text-[clamp(.86rem,5cqw,1.55rem)] font-black uppercase">
           {text.caption}
@@ -438,13 +467,20 @@ export function PrintTemplateCard({
           </TemplateText>
           <TemplateText
             className="max-w-[55%]"
-            style={{ fontFamily: "Georgia, serif", fontSize: "clamp(1.15rem,8cqw,2.6rem)" }}
+            style={{
+              fontFamily: "Georgia, serif",
+              fontSize: "clamp(1.15rem,8cqw,2.6rem)",
+            }}
           >
             {text.headline}
           </TemplateText>
         </div>
         <div className="relative mt-[18%] w-[70%]">
-          <StyledQrCode value={publicUrl} design={design} className="aspect-square w-full" />
+          <StyledQrCode
+            value={publicUrl}
+            design={design}
+            className="aspect-square w-full"
+          />
         </div>
         <TemplateText
           className="relative mt-[9%] text-[clamp(.58rem,3.4cqw,1rem)]"
@@ -472,7 +508,10 @@ export function PrintTemplateCard({
     >
       <TemplateText
         className="mt-[10%] font-black uppercase drop-shadow"
-        style={{ fontFamily: "Georgia, serif", fontSize: "clamp(1.6rem,12cqw,3.8rem)" }}
+        style={{
+          fontFamily: "Georgia, serif",
+          fontSize: "clamp(1.6rem,12cqw,3.8rem)",
+        }}
       >
         {text.headline}
       </TemplateText>
@@ -480,8 +519,15 @@ export function PrintTemplateCard({
         {text.subheadline}
       </TemplateText>
       <div className="mt-[10%] flex w-[80%] flex-1 flex-col items-center justify-center rounded-2xl border border-[#f1e8d8] bg-[#30302f] p-[9%]">
-        <StyledQrCode value={publicUrl} design={design} className="aspect-square w-full" />
-        <TemplateText className="mt-[10%] text-[clamp(.78rem,4.8cqw,1.45rem)] font-black" style={{ fontFamily: "Georgia, serif" }}>
+        <StyledQrCode
+          value={publicUrl}
+          design={design}
+          className="aspect-square w-full"
+        />
+        <TemplateText
+          className="mt-[10%] text-[clamp(.78rem,4.8cqw,1.45rem)] font-black"
+          style={{ fontFamily: "Georgia, serif" }}
+        >
           {text.caption}
         </TemplateText>
       </div>
