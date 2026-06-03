@@ -22,7 +22,12 @@ type DashboardShellProps = {
 const navItems = [
   { key: "overview", label: "Overview", icon: Home, href: "/dashboard" },
   { key: "qr", label: "QR codes", icon: QrCode, href: "/qr" },
-  { key: "settings", label: "Settings", icon: Sparkles, href: "/dashboard/settings" },
+  {
+    key: "settings",
+    label: "Settings",
+    icon: Sparkles,
+    href: "/dashboard/settings",
+  },
   { key: "landing", label: "Landing page", icon: FileText, href: "/" },
 ] as const;
 
@@ -53,14 +58,16 @@ export default function DashboardShell({
   const eyebrow = active === "qr" ? "QR print studio" : "Document workspace";
 
   return (
-    <main className="h-screen overflow-hidden bg-[var(--cream)] text-[var(--charcoal)]">
+    <main className="dashboard-shell-root h-screen overflow-hidden bg-[var(--cream)] text-[var(--charcoal)]">
       <div
-        className={`grid h-screen transition-[grid-template-columns] duration-200 ${
+        className={`dashboard-shell-grid grid h-screen transition-[grid-template-columns] duration-200 ${
           collapsed ? "lg:grid-cols-[88px_1fr]" : "lg:grid-cols-[280px_1fr]"
         }`}
       >
         <aside className="qr-print-hide hidden h-screen overflow-hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 backdrop-blur lg:block">
-          <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
+          <div
+            className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}
+          >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--charcoal)] text-white">
               <Sparkles size={19} />
             </div>
@@ -82,7 +89,11 @@ export default function DashboardShell({
             }`}
             title={collapsed ? "Expand sidebar" : "Minimize sidebar"}
           >
-            {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+            {collapsed ? (
+              <PanelLeftOpen size={17} />
+            ) : (
+              <PanelLeftClose size={17} />
+            )}
             {collapsed ? null : "Minimize"}
           </button>
 
@@ -122,7 +133,7 @@ export default function DashboardShell({
           )}
         </aside>
 
-        <section className="h-screen min-h-0 overflow-y-auto">
+        <section className="dashboard-shell-content h-screen min-h-0 overflow-y-auto">
           <header className="qr-print-hide sticky top-0 z-30 border-b border-[#e4dbce] bg-[#f7f3eb]/88 px-4 py-4 backdrop-blur-xl md:px-8">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
