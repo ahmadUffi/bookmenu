@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
 import {
+  AlertCircle,
   BarChart3,
   CheckCircle2,
   Copy,
@@ -49,6 +50,7 @@ export default function DashboardApp({
   const menus = initialMenus;
   const restaurantName = initialBusinessName || initialMenus[0]?.restaurantName || "";
   const [menuTitle, setMenuTitle] = useState("Product Catalog");
+  const [localError, setLocalError] = useState<string | null>(null);
   const [localMessage, setLocalMessage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -62,7 +64,10 @@ export default function DashboardApp({
     () => new Set(menus.map((menu) => menu.restaurantId)).size,
     [menus],
   );
-  const notice = localMessage ?? message ?? error;
+
+  const hasInteracted = selectedFile !== null || localError !== null || localMessage !== null;
+  const displayError = localError ?? (!hasInteracted ? error : null);
+  const displayMessage = localMessage ?? (!hasInteracted ? message : null);
 
   function publicUrl(slug: string, documentSlug: string) {
     return `${window.location.origin}/menu/${slug}/${documentSlug}`;
@@ -70,6 +75,7 @@ export default function DashboardApp({
 
   async function copyUrl(slug: string, documentSlug: string) {
     await navigator.clipboard.writeText(publicUrl(slug, documentSlug));
+    setLocalError(null);
     setLocalMessage("Public document URL copied.");
   }
 
@@ -91,15 +97,22 @@ export default function DashboardApp({
 
   function handleFile(file: File | null) {
     setSelectedFile(file);
+    setLocalError(null);
+    setLocalMessage(null);
     if (!file) return;
 
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      setLocalMessage("Only PDF files are accepted.");
+      setLocalError("Only PDF files are accepted.");
+      return;
+    }
+
+    if (file.size === 0) {
+      setLocalError("The selected file is empty or corrupted.");
       return;
     }
 
     if (file.size > uploadConfig.maxPdfBytes) {
-      setLocalMessage(`PDF is too large. Limit is ${formatBytes(uploadConfig.maxPdfBytes)}.`);
+      setLocalError(`PDF is too large. Limit is ${formatBytes(uploadConfig.maxPdfBytes)}.`);
       return;
     }
 
@@ -196,6 +209,11 @@ export default function DashboardApp({
                   <form
                     action={uploadMenuAction}
                     encType="multipart/form-data"
+                    onSubmit={(event) => {
+                      if (localError || !selectedFile) {
+                        event.preventDefault();
+                      }
+                    }}
                     className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-[var(--shadow-card)]"
                   >
                     <div className="flex items-center gap-3">
@@ -286,6 +304,7 @@ export default function DashboardApp({
                     <PendingSubmitButton
                       className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--green)] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--green-dark)]"
                       pendingText="Uploading"
+                      disabled={!!localError || !selectedFile}
                     >
                       <Upload size={17} />
                       Upload document
@@ -320,20 +339,20 @@ export default function DashboardApp({
                           {activeMenus.length === 1 ? "" : "s"}
                         </p>
                       </div>
-                      {notice ? (
-                        <p
-                          className={`rounded-2xl border px-3 py-2 text-sm font-medium ${
-                            error && !localMessage
-                              ? "border-red-200 bg-red-50 text-red-700"
-                              : "border-[#cfe1cf] bg-[#eef6ed] text-[var(--green-dark)]"
-                          }`}
-                        >
-                          {notice}
-                        </p>
+                      {displayError ? (
+                        <div className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+                          <AlertCircle size={16} className="shrink-0" />
+                          <span>{displayError}</span>
+                        </div>
+                      ) : displayMessage ? (
+                        <div className="flex items-center gap-2 rounded-2xl border border-[#cfe1cf] bg-[#eef6ed] px-3 py-2 text-sm font-medium text-[var(--green-dark)]">
+                          <CheckCircle2 size={16} className="shrink-0" />
+                          <span>{displayMessage}</span>
+                        </div>
                       ) : (
-                        <p className="rounded-2xl border border-[#e4dbce] bg-[#fbf7ef] px-3 py-2 text-sm font-medium text-[#666a61]">
-                          Document URLs synced with Supabase.
-                        </p>
+                        <div className="flex items-center gap-2 rounded-2xl border border-[#e4dbce] bg-[#fbf7ef] px-3 py-2 text-sm font-medium text-[#666a61]">
+                          <span>Document URLs synced with Supabase.</span>
+                        </div>
                       )}
                     </div>
                   </div>

@@ -8,12 +8,14 @@ type PendingSubmitButtonProps = {
   children: ReactNode;
   className: string;
   pendingText: string;
+  disabled?: boolean;
 };
 
 export default function PendingSubmitButton({
   children,
   className,
   pendingText,
+  disabled = false,
 }: PendingSubmitButtonProps) {
   const { pending } = useFormStatus();
 
@@ -21,7 +23,7 @@ export default function PendingSubmitButton({
     <button
       type="submit"
       className={`${className} disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:translate-y-0`}
-      disabled={pending}
+      disabled={pending || disabled}
       aria-busy={pending}
     >
       {pending ? (

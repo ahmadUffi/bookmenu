@@ -341,6 +341,10 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>1000x QR Scan</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
                     <span>Owner dashboard</span>
                   </li>
                 </ul>
@@ -371,6 +375,10 @@ export default function Home() {
                   <li className="flex items-center gap-2">
                     <Check size={16} className="text-[#5eead4] shrink-0" />
                     <span>5x Public document link</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>Unlimited QR Scan</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check size={16} className="text-[#5eead4] shrink-0" />
@@ -407,6 +415,11 @@ export default function Home() {
                   <li className="flex items-center gap-2">
                     <Check size={16} className="text-[#5eead4] shrink-0" />
                     <span>5x Public document link</span>
+                  </li>
+                  
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>Unlimited QR Scan</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check size={16} className="text-[#5eead4] shrink-0" />
