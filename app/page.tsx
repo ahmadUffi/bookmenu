@@ -333,11 +333,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check size={16} className="text-[#5eead4] shrink-0" />
-                    <span>1x Public document link</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={16} className="text-[#5eead4] shrink-0" />
-                    <span>QR download</span>
+                    <span>QR Menu</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check size={16} className="text-[#5eead4] shrink-0" />
@@ -374,10 +370,6 @@ export default function Home() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check size={16} className="text-[#5eead4] shrink-0" />
-                    <span>5x Public document link</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={16} className="text-[#5eead4] shrink-0" />
                     <span>Unlimited QR Scan</span>
                   </li>
                   <li className="flex items-center gap-2">
@@ -410,13 +402,8 @@ export default function Home() {
                 <ul className="mt-6 space-y-3.5 text-sm text-white/72">
                   <li className="flex items-center gap-2">
                     <Check size={16} className="text-[#5eead4] shrink-0" />
-                    <span>5x PDF upload</span>
+                    <span>10x PDF upload</span>
                   </li>
-                  <li className="flex items-center gap-2">
-                    <Check size={16} className="text-[#5eead4] shrink-0" />
-                    <span>5x Public document link</span>
-                  </li>
-                  
                   <li className="flex items-center gap-2">
                     <Check size={16} className="text-[#5eead4] shrink-0" />
                     <span>Unlimited QR Scan</span>

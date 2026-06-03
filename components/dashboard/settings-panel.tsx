@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   BarChart3,
   CheckCircle2,
+  CreditCard,
   FileCheck2,
   FileText,
   Home,
@@ -92,6 +93,13 @@ export default function SettingsPanel({
             >
               <Sparkles size={18} />
               Settings
+            </Link>
+            <Link
+              href="/dashboard/billing"
+              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
+            >
+              <CreditCard size={18} />
+              Billing
             </Link>
             <Link
               href="/"
@@ -253,23 +261,24 @@ export default function SettingsPanel({
                 <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm">
                   <h3 className="font-semibold">Billing & subscription</h3>
                   <p className="mt-2 text-sm leading-6 text-[#666a61]">
-                    This area is reserved for plan management, invoices, and
-                    future subscription controls.
+                    Manage your current plan, check quotas, usage details, and view payment invoices.
                   </p>
                   <div className="mt-4 rounded-2xl border border-[#e4dbce] bg-[#fbf7ef] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#777a72]">
                       Current plan
                     </p>
-                    <p className="mt-2 text-lg font-semibold">Starter</p>
+                    <p className="mt-2 text-lg font-semibold">Free Plan</p>
                     <p className="mt-1 text-sm text-[#666a61]">
-                      Perfect for getting the first document live. Billing upgrades can
-                      be connected here later.
+                      Perfect for keeping single documents active. Upgrades unlock additional features.
                     </p>
                   </div>
-                  <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#eef6ed] px-3 py-2 text-sm font-semibold text-[var(--green-dark)]">
-                    <CheckCircle2 size={14} />
-                    Same dashboard shell as overview
-                  </div>
+                  <Link
+                    href="/dashboard/billing"
+                    className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#d9d0c2] bg-[#fbf7ef] px-4 text-sm font-semibold transition hover:bg-white"
+                  >
+                    <CreditCard size={16} />
+                    Manage billing
+                  </Link>
                 </div>
 
                 <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm">

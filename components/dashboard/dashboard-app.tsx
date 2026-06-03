@@ -8,6 +8,7 @@ import {
   BarChart3,
   CheckCircle2,
   Copy,
+  CreditCard,
   Download,
   FileCheck2,
   FileText,
@@ -36,6 +37,7 @@ const navItems = [
   { label: "Overview", icon: Home, href: "#overview" },
   { label: "QR codes", icon: QrCode, href: "/qr" },
   { label: "Settings", icon: Sparkles, href: "/dashboard/settings" },
+  { label: "Billing", icon: CreditCard, href: "/dashboard/billing" },
   { label: "Landing page", icon: FileText, href: "/" },
 ];
 
