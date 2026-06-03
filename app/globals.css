@@ -106,11 +106,9 @@ a {
   grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
-.qr-print-sheet-6 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(3, minmax(0, 1fr));
-  column-gap: 0.75rem;
-  row-gap: clamp(1.75rem, 3.5vw, 2.5rem);
+.qr-template-card {
+  container-type: inline-size;
+  min-height: 0;
 }
 
 @media print {
@@ -146,11 +144,6 @@ a {
     box-shadow: none !important;
     break-after: page;
     page-break-after: always;
-  }
-
-  .qr-print-sheet-6 {
-    column-gap: 4mm !important;
-    row-gap: 8mm !important;
   }
 
   .qr-print-sheet:last-child {

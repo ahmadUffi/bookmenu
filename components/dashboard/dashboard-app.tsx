@@ -2,7 +2,6 @@
 
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import QRCode from "qrcode";
 import {
   BarChart3,
   CheckCircle2,
@@ -20,6 +19,10 @@ import {
 } from "lucide-react";
 import { formatBytes, uploadConfig } from "@/lib/config";
 import type { MenuRecord } from "@/lib/menu-types";
+import {
+  defaultQrDesign,
+  downloadStyledQrPng,
+} from "@/components/menu/styled-qr-code";
 import PendingSubmitButton from "@/components/ui/pending-submit-button";
 
 type DashboardAppProps = {
@@ -74,19 +77,11 @@ export default function DashboardApp({
   }
 
   async function downloadQr(menu: MenuRecord) {
-    const dataUrl = await QRCode.toDataURL(publicUrl(menu.slug, menu.documentSlug), {
-      margin: 2,
-      width: 900,
-      color: {
-        dark: "#1f211d",
-        light: "#fffdf8",
-      },
-    });
-
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = `${menu.slug}-qr.png`;
-    link.click();
+    await downloadStyledQrPng(
+      publicUrl(menu.slug, menu.documentSlug),
+      defaultQrDesign,
+      `${menu.slug}-qr.png`,
+    );
   }
 
   function handleFile(file: File | null) {

@@ -12,10 +12,15 @@ function getSafeNextPath(next: string | null) {
 
 function redirectWithAuthError(request: NextRequest, message: string) {
   const redirectTo = request.nextUrl.clone();
-  redirectTo.pathname = "/login";
+  const next = getSafeNextPath(request.nextUrl.searchParams.get("next"));
+  redirectTo.pathname = next === "/reset-password" ? "/forgot-password" : "/login";
   redirectTo.search = "";
   redirectTo.searchParams.set("error", message);
   return NextResponse.redirect(redirectTo);
+}
+
+function getAuthSuccessMessage(next: string) {
+  return next === "/reset-password" ? "Reset link verified" : "Email verified";
 }
 
 export async function GET(request: NextRequest) {
@@ -44,8 +49,12 @@ export async function GET(request: NextRequest) {
 
     if (!error) {
       redirectTo.searchParams.delete("next");
-      if (redirectTo.pathname === "/dashboard" || redirectTo.pathname === "/onboarding") {
-        redirectTo.searchParams.set("message", "Email verified");
+      if (
+        redirectTo.pathname === "/dashboard" ||
+        redirectTo.pathname === "/onboarding" ||
+        redirectTo.pathname === "/reset-password"
+      ) {
+        redirectTo.searchParams.set("message", getAuthSuccessMessage(redirectTo.pathname));
       }
       return NextResponse.redirect(redirectTo);
     }
@@ -67,8 +76,12 @@ export async function GET(request: NextRequest) {
 
     if (!error) {
       redirectTo.searchParams.delete("next");
-      if (redirectTo.pathname === "/dashboard" || redirectTo.pathname === "/onboarding") {
-        redirectTo.searchParams.set("message", "Email verified");
+      if (
+        redirectTo.pathname === "/dashboard" ||
+        redirectTo.pathname === "/onboarding" ||
+        redirectTo.pathname === "/reset-password"
+      ) {
+        redirectTo.searchParams.set("message", getAuthSuccessMessage(redirectTo.pathname));
       }
       return NextResponse.redirect(redirectTo);
     }
@@ -76,6 +89,8 @@ export async function GET(request: NextRequest) {
 
   return redirectWithAuthError(
     request,
-    "Confirmation link is invalid or expired. Please create an account again to get a fresh verification email.",
+    next === "/reset-password"
+      ? "Password reset link is invalid or expired. Please request a new link."
+      : "Confirmation link is invalid or expired. Please create an account again to get a fresh verification email.",
   );
 }
