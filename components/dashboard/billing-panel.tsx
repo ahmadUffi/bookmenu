@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Script from "next/script";
 import {
   AlertCircle,
-  ArrowUpRight,
   Check,
   CheckCircle2,
-  Copy,
   CreditCard,
   Download,
   FileCheck2,
@@ -21,13 +20,6 @@ import {
 } from "lucide-react";
 import type { MenuRecord } from "@/lib/menu-types";
 
-type BillingPanelProps = {
-  initialBusinessName: string;
-  initialMenus: MenuRecord[];
-};
-
-type PlanType = "free" | "monthly" | "yearly";
-
 type Transaction = {
   id: string;
   date: string;
@@ -37,12 +29,30 @@ type Transaction = {
   status: "Paid" | "Pending" | "Failed";
 };
 
+type BillingPanelProps = {
+  initialBusinessName: string;
+  initialMenus: MenuRecord[];
+  activePlan: "free" | "monthly" | "yearly";
+  endedAt: string | null;
+  transactions: Transaction[];
+  midtransClientKey: string;
+  midtransSnapUrl: string;
+};
+
+type PlanType = "free" | "monthly" | "yearly";
+
 export default function BillingPanel({
   initialBusinessName,
   initialMenus,
+  activePlan,
+  endedAt,
+  transactions,
+  midtransClientKey,
+  midtransSnapUrl,
 }: BillingPanelProps) {
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>("free");
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>(activePlan);
   const [notice, setNotice] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const totalMenusCount = initialMenus.length;
 
@@ -55,74 +65,84 @@ export default function BillingPanel({
       pdfLimit: 1,
       scanLimit: 1000,
       scansUsed: 420,
-      workspaceLimit: 1,
     },
     monthly: {
       name: "Monthly Plan",
       price: "Rp9.000,00",
       period: "month",
-      pdfLimit: 5,
+      pdfLimit: 10,
       scanLimit: "Unlimited",
       scansUsed: 1240,
-      workspaceLimit: "Unlimited",
     },
     yearly: {
       name: "Yearly Plan",
       price: "Rp99.000,00",
       period: "year",
-      pdfLimit: 5,
+      pdfLimit: 10,
       scanLimit: "Unlimited",
       scansUsed: 1240,
-      workspaceLimit: "Unlimited",
     },
   };
 
-  // Mock Transactions based on plan selection to look realistic
-  const allTransactions: Record<PlanType, Transaction[]> = {
-    free: [],
-    monthly: [
-      {
-        id: "tx_1",
-        date: "Jun 03, 2026",
-        invoiceNo: "INV-2026-004",
-        planName: "Monthly Subscription",
-        amount: "Rp9.000,00",
-        status: "Paid",
-      },
-      {
-        id: "tx_2",
-        date: "May 03, 2026",
-        invoiceNo: "INV-2026-002",
-        planName: "Monthly Subscription",
-        amount: "Rp9.000,00",
-        status: "Paid",
-      },
-    ],
-    yearly: [
-      {
-        id: "tx_3",
-        date: "Jun 03, 2026",
-        invoiceNo: "INV-2026-005",
-        planName: "Yearly Subscription",
-        amount: "Rp99.000,00",
-        status: "Paid",
-      },
-    ],
-  };
-
+  const activePlanDetails = plans[activePlan];
   const currentPlanDetails = plans[selectedPlan];
-  const transactions = allTransactions[selectedPlan];
 
-  const handlePlanChange = (plan: PlanType) => {
-    setSelectedPlan(plan);
-    setNotice(
-      plan === "free"
-        ? "Downgraded to Free Plan. Limits are now restricted."
-        : `Successfully changed plan to ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan (Simulation Mode).`
-    );
-    setTimeout(() => {
-      setNotice(null);
-    }, 4000);
+  const handlePlanCheckout = async (plan: PlanType) => {
+    if (plan === activePlan) return;
+    if (plan === "free") {
+      setNotice("Please contact support to cancel or downgrade your active plan.");
+      return;
+    }
+
+    setLoading(true);
+    setNotice(null);
+
+    try {
+      const res = await fetch("/api/midtrans/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ plan }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to generate payment token");
+      }
+
+      const data = await res.json();
+      const token = data.token;
+
+      if (typeof window !== "undefined" && (window as any).snap) {
+        (window as any).snap.pay(token, {
+          onSuccess: function (result: any) {
+            setNotice("Payment successful! Your active subscription will be updated shortly.");
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          },
+          onPending: function (result: any) {
+            setNotice("Payment pending. Please complete payment inside your payment app.");
+          },
+          onError: function (result: any) {
+            setNotice("Payment failed. Please try again.");
+          },
+          onClose: function () {
+            setNotice("Payment window closed before completion.");
+          },
+        });
+      } else if (data.redirect_url) {
+        window.location.href = data.redirect_url;
+      } else {
+        throw new Error("Midtrans Snap client library not loaded.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setNotice(err.message || "An error occurred during payment processing.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDownloadInvoice = (invoiceNo: string) => {
@@ -131,6 +151,13 @@ export default function BillingPanel({
 
   return (
     <main className="h-screen overflow-hidden bg-[var(--cream)] text-[var(--charcoal)]">
+      {/* Load Midtrans Snap client libraries */}
+      <Script
+        src={midtransSnapUrl}
+        data-client-key={midtransClientKey}
+        strategy="lazyOnload"
+      />
+
       <div className="grid h-screen lg:grid-cols-[280px_1fr]">
         {/* Navigation Sidebar */}
         <aside className="hidden h-screen overflow-hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 backdrop-blur lg:block">
@@ -184,13 +211,17 @@ export default function BillingPanel({
 
           <div className="mt-8 rounded-3xl border border-[#e4dbce] bg-[#f8f3eb] p-4">
             <p className="text-sm font-semibold">Billing Period</p>
-            <p className="mt-2 text-xs leading-5 text-[#666a61]">
-              {selectedPlan === "free" ? (
+            <div className="mt-2 text-xs leading-5 text-[#666a61]">
+              {activePlan === "free" ? (
                 "You are currently on the Free Tier. Upgrades are active immediately."
               ) : (
-                `Next renewal date: July 03, 2026 via simulated billing engine.`
+                <p>
+                  Renewal date:<br />
+                  <span className="font-semibold text-[var(--charcoal)]">{endedAt}</span><br />
+                  via Midtrans gateway.
+                </p>
               )}
-            </p>
+            </div>
           </div>
         </aside>
 
@@ -243,12 +274,12 @@ export default function BillingPanel({
                     {/* Free Card */}
                     <div
                       className={`relative flex flex-col justify-between rounded-2xl border p-5 transition-all ${
-                        selectedPlan === "free"
+                        activePlan === "free"
                           ? "border-[var(--green)] bg-[var(--green-soft)]/20 shadow-sm"
                           : "border-[#e4dbce] bg-[#fffdf8] hover:border-[#cbd5e1]"
                       }`}
                     >
-                      {selectedPlan === "free" && (
+                      {activePlan === "free" && (
                         <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white">
                           Active Plan
                         </span>
@@ -279,27 +310,27 @@ export default function BillingPanel({
                         </ul>
                       </div>
                       <button
-                        onClick={() => handlePlanChange("free")}
-                        disabled={selectedPlan === "free"}
+                        onClick={() => handlePlanCheckout("free")}
+                        disabled={activePlan === "free" || loading}
                         className={`mt-6 w-full rounded-xl py-2.5 text-xs font-semibold transition ${
-                          selectedPlan === "free"
+                          activePlan === "free"
                             ? "bg-[var(--green)] text-white cursor-default"
-                            : "border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef]"
+                            : "border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef] disabled:opacity-50"
                         }`}
                       >
-                        {selectedPlan === "free" ? "Current Plan" : "Choose Free"}
+                        {activePlan === "free" ? "Current Plan" : "Downgrade"}
                       </button>
                     </div>
 
                     {/* Monthly Card */}
                     <div
                       className={`relative flex flex-col justify-between rounded-2xl border p-5 transition-all ${
-                        selectedPlan === "monthly"
+                        activePlan === "monthly"
                           ? "border-[var(--green)] bg-[var(--green-soft)]/20 shadow-sm"
                           : "border-[#e4dbce] bg-[#fffdf8] hover:border-[#cbd5e1]"
                       }`}
                     >
-                      {selectedPlan === "monthly" && (
+                      {activePlan === "monthly" && (
                         <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white">
                           Active Plan
                         </span>
@@ -313,7 +344,7 @@ export default function BillingPanel({
                         <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
                           <li className="flex items-center gap-1.5">
                             <Check size={14} className="text-[var(--green)] shrink-0" />
-                            <span>5x PDF upload</span>
+                            <span>10x PDF upload</span>
                           </li>
                           <li className="flex items-center gap-1.5">
                             <Check size={14} className="text-[var(--green)] shrink-0" />
@@ -326,22 +357,22 @@ export default function BillingPanel({
                         </ul>
                       </div>
                       <button
-                        onClick={() => handlePlanChange("monthly")}
-                        disabled={selectedPlan === "monthly"}
+                        onClick={() => handlePlanCheckout("monthly")}
+                        disabled={activePlan === "monthly" || loading}
                         className={`mt-6 w-full rounded-xl py-2.5 text-xs font-semibold transition ${
-                          selectedPlan === "monthly"
+                          activePlan === "monthly"
                             ? "bg-[var(--green)] text-white cursor-default"
-                            : "border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef]"
+                            : "border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef] disabled:opacity-50"
                         }`}
                       >
-                        {selectedPlan === "monthly" ? "Current Plan" : "Choose Monthly"}
+                        {activePlan === "monthly" ? "Current Plan" : loading ? "Loading..." : "Choose Monthly"}
                       </button>
                     </div>
 
                     {/* Yearly Card - Best Value */}
                     <div
                       className={`relative flex flex-col justify-between rounded-2xl border-2 p-5 transition-all ${
-                        selectedPlan === "yearly"
+                        activePlan === "yearly"
                           ? "border-[var(--green)] bg-[var(--green-soft)]/20 shadow-sm"
                           : "border-[#ded5c7] bg-[#fffdf8] hover:border-[#cbd5e1]"
                       }`}
@@ -349,7 +380,7 @@ export default function BillingPanel({
                       <span className="absolute -top-2.5 right-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
                         Best Value
                       </span>
-                      {selectedPlan === "yearly" && (
+                      {activePlan === "yearly" && (
                         <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white">
                           Active Plan
                         </span>
@@ -376,15 +407,15 @@ export default function BillingPanel({
                         </ul>
                       </div>
                       <button
-                        onClick={() => handlePlanChange("yearly")}
-                        disabled={selectedPlan === "yearly"}
+                        onClick={() => handlePlanCheckout("yearly")}
+                        disabled={activePlan === "yearly" || loading}
                         className={`mt-6 w-full rounded-xl py-2.5 text-xs font-semibold transition ${
-                          selectedPlan === "yearly"
+                          activePlan === "yearly"
                             ? "bg-[var(--green)] text-white cursor-default"
-                            : "border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef]"
+                            : "border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef] disabled:opacity-50"
                         }`}
                       >
-                        {selectedPlan === "yearly" ? "Current Plan" : "Choose Yearly"}
+                        {activePlan === "yearly" ? "Current Plan" : loading ? "Loading..." : "Choose Yearly"}
                       </button>
                     </div>
                   </div>
@@ -431,7 +462,9 @@ export default function BillingPanel({
                               <td className="whitespace-nowrap px-6 py-4 font-semibold text-[var(--charcoal)]">{tx.amount}</td>
                               <td className="whitespace-nowrap px-6 py-4">
                                 <span className="inline-flex items-center gap-1 rounded-full border border-[#cfe1cf] bg-[#eef6ed] px-2.5 py-0.5 text-xs font-medium text-[var(--green-dark)]">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--green)]"></span>
+                                  <span className={`h-1.5 w-1.5 rounded-full ${
+                                    tx.status === "Paid" ? "bg-[var(--green)]" : "bg-yellow-500"
+                                  }`}></span>
                                   {tx.status}
                                 </span>
                               </td>
@@ -464,9 +497,9 @@ export default function BillingPanel({
 
                   <div className="mt-4 p-4 rounded-2xl bg-white border border-[#e4dbce]">
                     <div className="text-xs text-[#777a72] font-medium uppercase tracking-wider">Currently Using</div>
-                    <div className="text-xl font-bold mt-1 text-[var(--charcoal)]">{currentPlanDetails.name}</div>
+                    <div className="text-xl font-bold mt-1 text-[var(--charcoal)]">{activePlanDetails.name}</div>
                     <div className="mt-1 text-xs text-[#666a61]">
-                      {selectedPlan === "free" ? "Base features limit active." : "Pro features unlocked."}
+                      {activePlan === "free" ? "Base features limit active." : "Pro features unlocked."}
                     </div>
                   </div>
 
@@ -477,7 +510,7 @@ export default function BillingPanel({
                       <div className="flex justify-between text-xs font-semibold mb-1.5">
                         <span className="text-[#666a61]">PDF Uploads</span>
                         <span className="text-[var(--charcoal)]">
-                          {totalMenusCount} <span className="text-[#888c83]">/ {currentPlanDetails.pdfLimit}</span>
+                          {totalMenusCount} <span className="text-[#888c83]">/ {activePlanDetails.pdfLimit}</span>
                         </span>
                       </div>
                       <div className="h-2 w-full bg-[#f1ebe1] rounded-full overflow-hidden">
@@ -485,13 +518,13 @@ export default function BillingPanel({
                           className="h-full bg-[var(--green)] rounded-full transition-all duration-500"
                           style={{
                             width: `${Math.min(
-                              (totalMenusCount / currentPlanDetails.pdfLimit) * 100,
+                              (totalMenusCount / activePlanDetails.pdfLimit) * 100,
                               100
                             )}%`,
                           }}
                         />
                       </div>
-                      {totalMenusCount >= currentPlanDetails.pdfLimit && (
+                      {totalMenusCount >= activePlanDetails.pdfLimit && (
                         <p className="mt-1 text-[10px] text-red-600 font-medium flex items-center gap-1">
                           <AlertCircle size={10} /> Limit reached. Upgrade for more files.
                         </p>
@@ -503,9 +536,9 @@ export default function BillingPanel({
                       <div className="flex justify-between text-xs font-semibold mb-1.5">
                         <span className="text-[#666a61]">QR Code Scans</span>
                         <span className="text-[var(--charcoal)]">
-                          {currentPlanDetails.scansUsed}{" "}
+                          {activePlanDetails.scansUsed}{" "}
                           <span className="text-[#888c83]">
-                            / {typeof currentPlanDetails.scanLimit === "number" ? currentPlanDetails.scanLimit : "∞"}
+                            / {typeof activePlanDetails.scanLimit === "number" ? activePlanDetails.scanLimit : "∞"}
                           </span>
                         </span>
                       </div>
@@ -514,9 +547,9 @@ export default function BillingPanel({
                           className="h-full bg-[var(--green)] rounded-full transition-all duration-500"
                           style={{
                             width:
-                              typeof currentPlanDetails.scanLimit === "number"
+                              typeof activePlanDetails.scanLimit === "number"
                                 ? `${Math.min(
-                                    (currentPlanDetails.scansUsed / currentPlanDetails.scanLimit) * 100,
+                                    (activePlanDetails.scansUsed / activePlanDetails.scanLimit) * 100,
                                     100
                                   )}%`
                                 : "24%",
