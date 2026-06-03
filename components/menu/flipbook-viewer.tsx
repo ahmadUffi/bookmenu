@@ -28,11 +28,16 @@ type FlipbookHandle = {
 export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<FlipbookHandle | null>(null);
+  const flipAudioRef = useRef<HTMLAudioElement | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [page, setPage] = useState(0);
   const [pageRatio, setPageRatio] = useState(390 / 550);
   const [bookSize, setBookSize] = useState({ width: 390, height: 550 });
   const [error, setError] = useState(false);
+  const renderPixelRatio =
+    typeof window === "undefined"
+      ? 2
+      : Math.min(Math.max(window.devicePixelRatio || 1, 2), 3);
 
   const pages = useMemo(
     () => Array.from({ length: numPages }, (_, index) => index + 1),
@@ -44,6 +49,13 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
       pages.filter((pageNumber) => Math.abs(pageNumber - currentPage) <= 2),
     );
   }, [page, pages]);
+
+  function playFlipSound() {
+    flipAudioRef.current ??= new Audio("/flip.mp3");
+    flipAudioRef.current.volume = 0.3;
+    flipAudioRef.current.currentTime = 0;
+    void flipAudioRef.current.play().catch(() => {});
+  }
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -58,9 +70,7 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
       const viewportHeight =
         window.visualViewport?.height ?? window.innerHeight;
       const availableHeight = Math.max(frame.clientHeight, 320);
-      const vh = mobile
-        ? availableHeight
-        : Math.max(viewportHeight - 240, 320);
+      const vh = mobile ? availableHeight : Math.max(viewportHeight - 240, 320);
       const widthByHeight = Math.floor(vh * pageRatio);
       const nextWidth = Math.max(260, Math.min(vw, widthByHeight, 980));
       const nextHeight = Math.floor(nextWidth / pageRatio);
@@ -128,7 +138,7 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
               setPageRatio(nextRatio);
             }
           }}
-        > 
+        >
           {numPages > 0 ? (
             <HTMLFlipBook
               ref={bookRef}
@@ -155,7 +165,10 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
               swipeDistance={30}
               showPageCorners
               disableFlipByClick={false}
-              onFlip={(event) => setPage(event.data)}
+              onFlip={(event) => {
+                playFlipSound();
+                setPage(event.data);
+              }}
             >
               {pages.map((pageNumber) => (
                 <div
@@ -166,6 +179,7 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
                     <Page
                       pageNumber={pageNumber}
                       width={bookSize.width}
+                      devicePixelRatio={renderPixelRatio}
                       renderAnnotationLayer={false}
                       renderTextLayer={false}
                       loading={
