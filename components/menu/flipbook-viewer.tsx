@@ -29,6 +29,7 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<FlipbookHandle | null>(null);
   const flipAudioRef = useRef<HTMLAudioElement | null>(null);
+  const lastFlipSoundAtRef = useRef(0);
   const [numPages, setNumPages] = useState(0);
   const [page, setPage] = useState(0);
   const [pageRatio, setPageRatio] = useState(390 / 550);
@@ -51,6 +52,13 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
   }, [page, pages]);
 
   function playFlipSound() {
+    const now = Date.now();
+
+    if (now - lastFlipSoundAtRef.current < 250) {
+      return;
+    }
+
+    lastFlipSoundAtRef.current = now;
     flipAudioRef.current ??= new Audio("/flip.mp3");
     flipAudioRef.current.volume = 0.3;
     flipAudioRef.current.currentTime = 0;
@@ -166,8 +174,12 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
               showPageCorners
               disableFlipByClick={false}
               onFlip={(event) => {
-                playFlipSound();
                 setPage(event.data);
+              }}
+              onChangeState={(event) => {
+                if (event.data === "flipping") {
+                  playFlipSound();
+                }
               }}
             >
               {pages.map((pageNumber) => (
@@ -218,6 +230,7 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
           type="button"
           className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#d9d0c2] bg-white transition hover:-translate-y-0.5 hover:bg-[#fbf7ef] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 sm:h-12 sm:w-12"
           onClick={() => {
+            playFlipSound();
             bookRef.current?.pageFlip?.()?.flipPrev?.();
           }}
           aria-label="Previous page"
@@ -232,6 +245,7 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
           type="button"
           className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#d9d0c2] bg-white transition hover:-translate-y-0.5 hover:bg-[#fbf7ef] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 sm:h-12 sm:w-12"
           onClick={() => {
+            playFlipSound();
             bookRef.current?.pageFlip?.()?.flipNext?.();
           }}
           aria-label="Next page"
