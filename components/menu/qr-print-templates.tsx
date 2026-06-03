@@ -8,6 +8,7 @@ import StyledQrCode, {
 } from "@/components/menu/styled-qr-code";
 
 export type PrintTemplateId =
+  | "original"
   | "plain"
   | "framed"
   | "sketch"
@@ -26,6 +27,7 @@ export const printTemplates: Array<{
   id: PrintTemplateId;
   name: string;
 }> = [
+  { id: "original", name: "Original QR" },
   { id: "plain", name: "Plain QR" },
   { id: "framed", name: "Clean Frame" },
   { id: "sketch", name: "Sketch" },
@@ -39,6 +41,13 @@ export function getDefaultTemplateText(
   menu: MenuRecord,
 ): PrintTemplateText {
   switch (templateId) {
+    case "original":
+      return {
+        headline: "",
+        subheadline: "",
+        caption: "",
+        footer: "",
+      };
     case "framed":
       return {
         headline: "SCAN HERE",
@@ -142,6 +151,12 @@ export function getPrintTemplateSvg({
   const subtitle = clampText(text.subheadline, 42);
   const caption = clampText(text.caption, 56);
   const footer = clampText(text.footer, 70);
+
+  if (templateId === "original") {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <image href="${qrData}" x="110" y="290" width="680" height="680"/>
+    </svg>`;
+  }
 
   if (templateId === "plain") {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">

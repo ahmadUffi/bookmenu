@@ -15,6 +15,7 @@ import {
 import type { MenuRecord } from "@/lib/menu-types";
 import {
   defaultQrDesign,
+  downloadStyledQrPng,
   type QrDesign,
   type QrEyeShape,
   type QrPieceShape,
@@ -94,7 +95,8 @@ function readStoredSettings(menu: MenuRecord) {
     }
 
     const parsed = JSON.parse(stored) as StoredQrSettings & Partial<QrDesign>;
-    const hasNewShape = "design" in parsed || "templateId" in parsed || "templateText" in parsed;
+    const hasNewShape =
+      "design" in parsed || "templateId" in parsed || "templateText" in parsed;
     const design = {
       ...defaultQrDesign,
       ...(hasNewShape ? parsed.design : parsed),
@@ -174,9 +176,11 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
   );
 
   const relativeUrl = selectedMenu ? getRelativeUrl(selectedMenu) : "";
-  const absoluteUrl = origin && relativeUrl ? `${origin}${relativeUrl}` : relativeUrl;
+  const absoluteUrl =
+    origin && relativeUrl ? `${origin}${relativeUrl}` : relativeUrl;
   const copies = useMemo(
-    () => Array.from({ length: Math.max(1, quantity) }, (_, index) => index + 1),
+    () =>
+      Array.from({ length: Math.max(1, quantity) }, (_, index) => index + 1),
     [quantity],
   );
   const pages = useMemo(() => chunk(copies, cardsPerSheet), [copies]);
@@ -214,6 +218,15 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
 
   async function downloadQr() {
     if (!selectedMenu || !absoluteUrl) return;
+    if (templateId === "original") {
+      await downloadStyledQrPng(
+        absoluteUrl,
+        design,
+        `${selectedMenu.slug}-${selectedMenu.documentSlug}-qr.png`,
+      );
+      return;
+    }
+
     await downloadPrintTemplatePng({
       design,
       filename: `${selectedMenu.slug}-${selectedMenu.documentSlug}-${templateId}.png`,
@@ -236,7 +249,8 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
   }
 
   function selectDocument(menuId: string) {
-    const nextMenu = menus.find((menu) => menu.id === menuId) ?? menus[0] ?? null;
+    const nextMenu =
+      menus.find((menu) => menu.id === menuId) ?? menus[0] ?? null;
     setSelectedId(menuId);
     if (!nextMenu) return;
 
@@ -268,7 +282,8 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
       <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm">
         <h2 className="font-semibold">No active document</h2>
         <p className="mt-2 text-sm leading-6 text-[#666a61]">
-          Upload a PDF document from the dashboard to generate printable QR cards.
+          Upload a PDF document from the dashboard to generate printable QR
+          cards.
         </p>
       </div>
     );
@@ -313,7 +328,9 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
 
             <div>
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-bold uppercase text-[#151924]">Logos</p>
+                <p className="text-xs font-bold uppercase text-[#151924]">
+                  Logos
+                </p>
                 <button
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
@@ -328,7 +345,9 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
                 type="file"
                 accept="image/*"
                 className="sr-only"
-                onChange={(event) => uploadLogo(event.target.files?.[0] ?? null)}
+                onChange={(event) =>
+                  uploadLogo(event.target.files?.[0] ?? null)
+                }
               />
               <div className="mt-3 grid grid-cols-4 gap-2">
                 <button
@@ -360,7 +379,9 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
                       className="h-8 w-8 object-contain"
                     />
                   ) : (
-                    <span className="text-xs font-semibold text-[#9aa0aa]">Logo</span>
+                    <span className="text-xs font-semibold text-[#9aa0aa]">
+                      Logo
+                    </span>
                   )}
                 </div>
                 <button
@@ -382,6 +403,7 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
                 <button
                   type="button"
                   onClick={resetTemplateText}
+                  disabled={templateId === "original"}
                   className="inline-flex min-h-8 items-center gap-2 rounded-xl border border-[#dbe2ea] bg-white px-3 text-xs font-semibold text-[#5f6673]"
                 >
                   <RotateCcw size={14} />
@@ -406,32 +428,38 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <p className="text-xs font-bold uppercase text-[#151924]">
-                Template Text
-              </p>
-              {(
-                [
-                  ["headline", "Headline"],
-                  ["subheadline", "Subheadline"],
-                  ["caption", "Caption"],
-                  ["footer", "Small text"],
-                ] as const
-              ).map(([field, label]) => (
-                <label key={field} className="block text-sm font-semibold">
-                  {label}
-                  <input
-                    value={templateText[field]}
-                    maxLength={field === "footer" ? 60 : 52}
-                    onChange={(event) => updateTemplateText(field, event.target.value)}
-                    className="mt-2 min-h-11 w-full rounded-xl border border-[#ded5c7] bg-white px-3 text-sm outline-none transition focus:border-[var(--green)] focus:ring-4 focus:ring-[#426b4f]/15"
-                  />
-                </label>
-              ))}
-            </div>
+            {templateId !== "original" ? (
+              <div className="space-y-3">
+                <p className="text-xs font-bold uppercase text-[#151924]">
+                  Template Text
+                </p>
+                {(
+                  [
+                    ["headline", "Headline"],
+                    ["subheadline", "Subheadline"],
+                    ["caption", "Caption"],
+                    ["footer", "Small text"],
+                  ] as const
+                ).map(([field, label]) => (
+                  <label key={field} className="block text-sm font-semibold">
+                    {label}
+                    <input
+                      value={templateText[field]}
+                      maxLength={field === "footer" ? 60 : 52}
+                      onChange={(event) =>
+                        updateTemplateText(field, event.target.value)
+                      }
+                      className="mt-2 min-h-11 w-full rounded-xl border border-[#ded5c7] bg-white px-3 text-sm outline-none transition focus:border-[var(--green)] focus:ring-4 focus:ring-[#426b4f]/15"
+                    />
+                  </label>
+                ))}
+              </div>
+            ) : null}
 
             <div>
-              <p className="text-xs font-bold uppercase text-[#151924]">Shapes</p>
+              <p className="text-xs font-bold uppercase text-[#151924]">
+                Shapes
+              </p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {pieceShapes.map((shape) => (
                   <ControlButton
@@ -492,7 +520,9 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
             </div>
 
             <div>
-              <p className="text-xs font-bold uppercase text-[#151924]">Corners</p>
+              <p className="text-xs font-bold uppercase text-[#151924]">
+                Corners
+              </p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {eyeShapes.map((shape) => (
                   <ControlButton
@@ -509,14 +539,18 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
                 <div className="mt-2 flex gap-2">
                   <input
                     value={design.eyeColor}
-                    onChange={(event) => updateDesign({ eyeColor: event.target.value })}
+                    onChange={(event) =>
+                      updateDesign({ eyeColor: event.target.value })
+                    }
                     className="min-h-11 min-w-0 flex-1 rounded-xl border border-[#ded5c7] bg-white px-3 text-sm"
                   />
                   <input
                     aria-label="QR corner color"
                     type="color"
                     value={design.eyeColor}
-                    onChange={(event) => updateDesign({ eyeColor: event.target.value })}
+                    onChange={(event) =>
+                      updateDesign({ eyeColor: event.target.value })
+                    }
                     className="h-11 w-12 rounded-xl border border-[#ded5c7] bg-white p-1"
                   />
                 </div>
@@ -533,7 +567,10 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
                   value={quantity}
                   onChange={(event) =>
                     setQuantity(
-                      Math.max(1, Math.min(120, Number(event.target.value) || 1)),
+                      Math.max(
+                        1,
+                        Math.min(120, Number(event.target.value) || 1),
+                      ),
                     )
                   }
                   className="mt-2 min-h-11 w-full rounded-xl border border-[#ded5c7] bg-[#fbf7ef] px-4 text-sm outline-none transition focus:border-[var(--green)] focus:bg-white focus:ring-4 focus:ring-[#426b4f]/15"
@@ -618,16 +655,18 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
             </div>
           </div>
           <div className="rounded-2xl border border-[#dbe2ea] bg-[#fbf7ef] p-4">
-            <p className="text-sm font-semibold">{selectedMenu.restaurantName}</p>
+            <p className="text-sm font-semibold">
+              {selectedMenu.restaurantName}
+            </p>
             <p className="mt-1 text-sm text-[#666a61]">
               Selected print template:{" "}
-              {printTemplates.find((template) => template.id === templateId)?.name ??
-                "Plain QR"}
+              {printTemplates.find((template) => template.id === templateId)
+                ?.name ?? "Plain QR"}
             </p>
             <div className="mt-4 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-[#5f6673]">
-              {quantity} card{quantity === 1 ? "" : "s"} across {pages.length} sheet
-              {pages.length === 1 ? "" : "s"}
-              {" "}at {cardsPerSheet} per A4
+              {quantity} card{quantity === 1 ? "" : "s"} across {pages.length}{" "}
+              sheet
+              {pages.length === 1 ? "" : "s"} at {cardsPerSheet} per A4
             </div>
           </div>
         </div>
