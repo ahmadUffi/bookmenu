@@ -140,7 +140,7 @@ export default function DashboardApp({
           <div className="mt-8 rounded-3xl border border-[#e4dbce] bg-[#f8f3eb] p-4">
             <p className="text-sm font-semibold">Storage status</p>
             <p className="mt-2 text-sm leading-6 text-[#666a61]">
-              Connected to Supabase bucket {uploadConfig.bucket}.
+              Files stored in {uploadConfig.storageProvider} bucket {uploadConfig.bucket}.
             </p>
           </div>
         </aside>
@@ -332,7 +332,7 @@ export default function DashboardApp({
                         </p>
                       ) : (
                         <p className="rounded-2xl border border-[#e4dbce] bg-[#fbf7ef] px-3 py-2 text-sm font-medium text-[#666a61]">
-                          Documents synced with Supabase.
+                          Document URLs synced with Supabase.
                         </p>
                       )}
                     </div>

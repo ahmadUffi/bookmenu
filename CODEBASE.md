@@ -1,6 +1,6 @@
 # Codebase Overview
 
-BookMenu is a Next.js 16 App Router application for turning restaurant PDF menus into public mobile menu pages with QR codes and a flipbook-style viewer. The current implementation uses Supabase for auth, database records, and PDF storage.
+BookMenu is a Next.js 16 App Router application for turning restaurant PDF menus into public mobile menu pages with QR codes and a flipbook-style viewer. The current implementation uses Supabase for auth and database records, with Cloudflare R2 storing uploaded files.
 
 ## Stack
 
@@ -24,8 +24,13 @@ Required variables:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-NEXT_PUBLIC_SUPABASE_MENU_BUCKET=menus
+NEXT_PUBLIC_R2_BUCKET=menus
 NEXT_PUBLIC_MAX_PDF_UPLOAD_MB=15
+CLOUDFLARE_R2_ACCOUNT_ID=
+CLOUDFLARE_R2_ACCESS_KEY_ID=
+CLOUDFLARE_R2_SECRET_ACCESS_KEY=
+CLOUDFLARE_R2_BUCKET=menus
+CLOUDFLARE_R2_PUBLIC_URL=
 ```
 
 Use `.env.example` as the template for new environments.
@@ -48,16 +53,15 @@ Database objects:
 - `public.menus`
 - `public.user_role` enum with `user` and `admin`
 - `private.handle_new_user()` trigger function
-- `storage.buckets` entry for `menus`
-- Storage upload path format: `{auth.user.id}/{generated-restaurant-slug}-{timestamp}-{filename}.pdf`
+- R2 bucket for uploaded PDFs and logos.
+- Storage upload path format: `{auth.user.id}/{restaurant-slug}/{document-slug}-{timestamp}-{filename}.pdf`
 
 Security:
 
 - RLS is enabled on all public tables.
 - Business users can manage only their own restaurants and menus.
 - Public users can read restaurants and active menus.
-- Storage bucket accepts PDF uploads only.
-- Public bucket listing policy was removed after Supabase advisor warning.
+- Supabase stores public R2 URLs in `menus.pdf_url` and `restaurants.logo_url`.
 - Authenticated restaurant owners can read, insert, update, and delete their own menu rows.
 - Admin users can read all users, restaurants, and menus for monitoring.
 
@@ -113,9 +117,9 @@ Current behavior:
 - Unauthenticated users are redirected to `/login`.
 - Dashboard lists menus from `public.restaurants` and `public.menus`.
 - Uploads call `app/dashboard/actions.ts`.
-- Server action validates PDF type and size, uploads to Supabase Storage, uses the current user's restaurant, and creates a menu row.
+- Server action validates PDF type and size, uploads to Cloudflare R2, uses the current user's restaurant, and creates a menu row with the public file URL.
 - If an older user has no restaurant profile yet, upload creates one from the business name field.
-- Delete calls a server action that deletes the menu row and removes the storage object when the public URL path can be resolved.
+- Delete calls a server action that deletes the menu row and removes the R2 object when the public URL path can be resolved.
 - Copy URL and QR download use the real restaurant slug from the database.
 
 ## Public Menu Viewer
@@ -152,7 +156,7 @@ Current behavior:
 `lib/config.ts`
 
 - Central upload config.
-- Reads PDF size limit and bucket name from env.
+- Reads PDF size limit and public R2 bucket name from env.
 
 `lib/menu-types.ts`
 

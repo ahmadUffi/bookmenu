@@ -105,7 +105,7 @@ export default function SettingsPanel({
           <div className="mt-8 rounded-3xl border border-[#e4dbce] bg-[#f8f3eb] p-4">
             <p className="text-sm font-semibold">Storage status</p>
             <p className="mt-2 text-sm leading-6 text-[#666a61]">
-              Connected to Supabase bucket {uploadConfig.bucket}.
+              Files stored in {uploadConfig.storageProvider} bucket {uploadConfig.bucket}.
             </p>
           </div>
         </aside>

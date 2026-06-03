@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getDocumentSlug } from "@/lib/document-slug";
 import { formatBytes, logoUploadConfig, uploadConfig } from "@/lib/config";
+import { deleteR2Object, uploadR2Object } from "@/lib/r2-storage";
 import { slugify, uniqueSlug } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,11 +22,12 @@ function dashboardError(message: string): never {
   redirect(`/dashboard?error=${encodeURIComponent(message)}`);
 }
 
-function getStoragePath(url: string, bucket: string) {
-  const pathMarker = `/storage/v1/object/public/${bucket}/`;
-  return url.includes(pathMarker)
-    ? decodeURIComponent(url.split(pathMarker)[1] ?? "")
-    : "";
+async function deleteStoredObject(url: string) {
+  try {
+    await deleteR2Object(url);
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 async function requireUser() {
@@ -157,20 +159,17 @@ export async function uploadMenu(formData: FormData) {
   const cleanFileName = slugify(file.name.replace(/\.pdf$/i, "")) || documentSlug;
   const storagePath = `${user.id}/${restaurant.slug}/${documentSlug}-${Date.now()}-${cleanFileName}.pdf`;
 
-  const { error: uploadError } = await supabase.storage
-    .from(uploadConfig.bucket)
-    .upload(storagePath, file, {
+  let publicUrl: string;
+
+  try {
+    publicUrl = await uploadR2Object({
+      body: file,
       contentType: "application/pdf",
-      upsert: false,
+      key: storagePath,
     });
-
-  if (uploadError) {
-    dashboardError(uploadError.message);
+  } catch (error) {
+    dashboardError(error instanceof Error ? error.message : "Unable to upload document.");
   }
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(uploadConfig.bucket).getPublicUrl(storagePath);
 
   const menuPayload = {
     restaurant_id: restaurant.id,
@@ -201,6 +200,7 @@ export async function uploadMenu(formData: FormData) {
       .single();
 
     if (legacyMenuError || !legacyMenu) {
+      await deleteStoredObject(publicUrl);
       dashboardError(legacyMenuError?.message ?? menuError.message);
     }
 
@@ -246,7 +246,6 @@ export async function updateBusinessSettings(formData: FormData) {
 
   const logoFile = formData.get("logo");
   let nextLogoUrl = restaurant.logo_url ?? null;
-  let uploadedLogoPath: string | null = null;
 
   if (logoFile instanceof File && logoFile.size > 0) {
     if (!logoFile.type.startsWith("image/")) {
@@ -259,24 +258,17 @@ export async function updateBusinessSettings(formData: FormData) {
 
     const fileExt = logoFile.name.split(".").pop()?.toLowerCase() || "png";
     const cleanFileName = slugify(logoFile.name.replace(/\.[^.]+$/, "")) || "logo";
-    uploadedLogoPath = `${user.id}/${restaurant.slug}-${Date.now()}-${cleanFileName}.${fileExt}`;
+    const uploadedLogoPath = `${user.id}/${restaurant.slug}-${Date.now()}-${cleanFileName}.${fileExt}`;
 
-    const { error: logoUploadError } = await supabase.storage
-      .from(logoUploadConfig.bucket)
-      .upload(uploadedLogoPath, logoFile, {
+    try {
+      nextLogoUrl = await uploadR2Object({
+        body: logoFile,
         contentType: logoFile.type,
-        upsert: false,
+        key: uploadedLogoPath,
       });
-
-    if (logoUploadError) {
-      dashboardError(logoUploadError.message);
+    } catch (error) {
+      dashboardError(error instanceof Error ? error.message : "Unable to upload logo.");
     }
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from(logoUploadConfig.bucket).getPublicUrl(uploadedLogoPath);
-
-    nextLogoUrl = publicUrl;
   }
 
   const { error: updateError } = await supabase
@@ -288,19 +280,14 @@ export async function updateBusinessSettings(formData: FormData) {
     .eq("id", restaurant.id);
 
   if (updateError) {
-    if (uploadedLogoPath) {
-      await supabase.storage.from(logoUploadConfig.bucket).remove([uploadedLogoPath]);
+    if (nextLogoUrl && nextLogoUrl !== restaurant.logo_url) {
+      await deleteStoredObject(nextLogoUrl);
     }
     dashboardError(updateError.message);
   }
 
-  const previousLogoPath =
-    restaurant.logo_url && restaurant.logo_url !== nextLogoUrl
-      ? getStoragePath(restaurant.logo_url, logoUploadConfig.bucket)
-      : "";
-
-  if (previousLogoPath) {
-    await supabase.storage.from(logoUploadConfig.bucket).remove([previousLogoPath]);
+  if (restaurant.logo_url && restaurant.logo_url !== nextLogoUrl) {
+    await deleteStoredObject(restaurant.logo_url);
   }
 
   revalidatePath("/dashboard");
@@ -318,17 +305,13 @@ export async function deleteMenu(formData: FormData) {
     dashboardError("Document id is required.");
   }
 
-  const storagePath = getStoragePath(storageUrl, uploadConfig.bucket);
-
   const { error } = await supabase.from("menus").delete().eq("id", menuId);
 
   if (error) {
     dashboardError(error.message);
   }
 
-  if (storagePath) {
-    await supabase.storage.from(uploadConfig.bucket).remove([storagePath]);
-  }
+  await deleteStoredObject(storageUrl);
 
   revalidatePath("/dashboard");
   redirect(`/dashboard?message=${encodeURIComponent("Document deleted.")}`);

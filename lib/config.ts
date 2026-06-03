@@ -1,11 +1,11 @@
 export const uploadConfig = {
   maxPdfBytes: Number(process.env.NEXT_PUBLIC_MAX_PDF_UPLOAD_MB ?? 15) * 1024 * 1024,
-  bucket: process.env.NEXT_PUBLIC_SUPABASE_MENU_BUCKET ?? "menus",
+  bucket: process.env.NEXT_PUBLIC_R2_BUCKET ?? "menus",
+  storageProvider: "Cloudflare R2",
 };
 
 export const logoUploadConfig = {
   maxImageBytes: 5 * 1024 * 1024,
-  bucket: process.env.NEXT_PUBLIC_SUPABASE_LOGO_BUCKET ?? "logos",
 };
 
 export function formatBytes(bytes: number) {
