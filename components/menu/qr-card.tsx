@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import QRCode from "qrcode";
+import { useState } from "react";
 import { Download, QrCode as QrCodeIcon } from "lucide-react";
+import StyledQrCode, {
+  defaultQrDesign,
+  downloadStyledQrPng,
+} from "@/components/menu/styled-qr-code";
 
 type QrCardProps = {
   value: string;
@@ -10,19 +13,10 @@ type QrCardProps = {
 };
 
 export default function QrCard({ value, filename }: QrCardProps) {
-  const [qr, setQr] = useState("");
-
-  useEffect(() => {
-    const absoluteValue = value.startsWith("/")
-      ? `${window.location.origin}${value}`
-      : value;
-
-    QRCode.toDataURL(absoluteValue, {
-      width: 640,
-      margin: 2,
-      color: { dark: "#1f211d", light: "#fffdf8" },
-    }).then(setQr);
-  }, [value]);
+  const [origin] = useState(() =>
+    typeof window === "undefined" ? "" : window.location.origin,
+  );
+  const absoluteValue = origin && value.startsWith("/") ? `${origin}${value}` : value;
 
   return (
     <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-4 shadow-[var(--shadow-card)]">
@@ -35,24 +29,20 @@ export default function QrCard({ value, filename }: QrCardProps) {
           <QrCodeIcon size={19} />
         </div>
       </div>
-      {qr ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={qr}
-          alt="Document QR code"
-          className="mt-4 aspect-square w-full rounded-3xl border border-[#eee6da] bg-[#fbf7ef] p-3"
-        />
-      ) : (
-        <div className="mt-4 aspect-square w-full animate-pulse rounded-3xl bg-[#f3ede3]" />
-      )}
-      <a
-        href={qr}
-        download={`${filename}.png`}
+      <StyledQrCode
+        value={absoluteValue}
+        design={defaultQrDesign}
+        title="Document QR code"
+        className="mt-4 aspect-square w-full rounded-3xl border border-[#eee6da] bg-[#fbf7ef] p-3"
+      />
+      <button
+        type="button"
+        onClick={() => downloadStyledQrPng(absoluteValue, defaultQrDesign, `${filename}.png`)}
         className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--charcoal)] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#30332d]"
       >
         <Download size={17} />
         Download QR
-      </a>
+      </button>
     </div>
   );
 }
