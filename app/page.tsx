@@ -303,36 +303,125 @@ export default function Home() {
       </section>
 
       <section id="pricing" className="px-4 py-16 md:py-24">
-        <div className="mx-auto max-w-7xl rounded-[2rem] border border-[#1f2937] bg-[var(--charcoal)] p-6 text-white shadow-[0_30px_90px_rgba(20,24,34,0.2)] md:p-10">
-          <div className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-center">
-            <div>
-              <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-[#ccfbf1]">
-                <Sparkles size={15} />
-                Starter access
-              </p>
-              <h2 className="mt-5 max-w-2xl text-3xl font-semibold tracking-tight md:text-5xl">
-                Publish the first showcase now. Add billing when the plan is ready.
-              </h2>
-              <p className="mt-5 max-w-2xl leading-7 text-white/68">
-                The product is commercially positioned without introducing
-                payment logic before the pricing model is finalized.
-              </p>
+        <div className="mx-auto max-w-7xl rounded-[2rem] border border-[#1f2937] bg-[var(--charcoal)] p-6 text-white shadow-[0_30px_90px_rgba(20,24,34,0.2)] md:p-10 lg:p-16">
+          <div className="mx-auto mb-12 max-w-3xl text-center">
+            <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-[#ccfbf1]">
+              <Sparkles size={15} />
+              Pricing plans
+            </p>
+            <h2 className="mt-5 text-3xl font-semibold tracking-tight md:text-5xl">
+              Simple, transparent pricing
+            </h2>
+            <p className="mt-4 text-white/70">
+              Choose the perfect plan for your business. Start for free and upgrade as your documents grow.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* Free Plan */}
+            <div className="flex flex-col justify-between rounded-3xl border border-white/12 bg-white/5 p-6 backdrop-blur transition hover:border-white/20 hover:bg-white/8">
+              <div>
+                <p className="text-sm font-semibold text-white/70">Free</p>
+                <div className="mt-4 flex items-baseline">
+                  <span className="text-3xl font-semibold tracking-tight">Rp0</span>
+                  <span className="ml-1 text-sm font-medium text-white/55">/ month</span>
+                </div>
+                <ul className="mt-6 space-y-3.5 text-sm text-white/72">
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>1x PDF upload</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>QR Menu</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>1000x QR Scan</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>Owner dashboard</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="mt-8">
+                <Link
+                  href="/register"
+                  className="block w-full text-center rounded-xl bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+                >
+                  Get Started
+                </Link>
+              </div>
             </div>
-            <div className="rounded-3xl border border-white/12 bg-white/8 p-6 backdrop-blur">
-              <p className="text-sm font-semibold text-[#ccfbf1]">Starter</p>
-              <p className="mt-3 text-4xl font-semibold">
-                $0<span className="text-base font-medium text-white/55"> / preview</span>
-              </p>
-              <ul className="mt-6 space-y-3 text-sm text-white/72">
-                {["PDF upload", "Public document link", "QR download", "Owner dashboard"].map(
-                  (item) => (
-                    <li key={item} className="flex items-center gap-2">
-                      <Check size={16} className="text-[#5eead4]" />
-                      {item}
-                    </li>
-                  ),
-                )}
-              </ul>
+
+            {/* Monthly Plan */}
+            <div className="flex flex-col justify-between rounded-3xl border border-white/12 bg-white/5 p-6 backdrop-blur transition hover:border-white/20 hover:bg-white/8">
+              <div>
+                <p className="text-sm font-semibold text-white/70">Monthly</p>
+                <div className="mt-4 flex items-baseline">
+                  <span className="text-3xl font-semibold tracking-tight">Rp9.000,00</span>
+                  <span className="ml-1 text-sm font-medium text-white/55">/ month</span>
+                </div>
+                <ul className="mt-6 space-y-3.5 text-sm text-white/72">
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>5x PDF upload</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>Unlimited QR Scan</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>Custom QR</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="mt-8">
+                <Link
+                  href="/register"
+                  className="block w-full text-center rounded-xl bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+                >
+                  Choose Monthly
+                </Link>
+              </div>
+            </div>
+
+            {/* Yearly Plan - Featured */}
+            <div className="relative flex flex-col justify-between rounded-3xl border-2 border-[var(--green)] bg-white/10 p-6 backdrop-blur shadow-[0_0_30px_rgba(20,184,166,0.15)] transition hover:bg-white/12">
+              <div className="absolute -top-3 right-6 rounded-full bg-[var(--green)] px-3 py-1 text-xs font-semibold text-white">
+                Best Value
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[var(--green-soft)]">Yearly</p>
+                <div className="mt-4 flex items-baseline">
+                  <span className="text-3xl font-semibold tracking-tight">Rp99.000,00</span>
+                  <span className="ml-1 text-sm font-medium text-white/55">/ year</span>
+                </div>
+                <ul className="mt-6 space-y-3.5 text-sm text-white/72">
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>10x PDF upload</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>Unlimited QR Scan</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check size={16} className="text-[#5eead4] shrink-0" />
+                    <span>Custom QR</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="mt-8">
+                <Link
+                  href="/register"
+                  className="block w-full text-center rounded-xl bg-[var(--green)] py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(20,184,166,0.24)] transition hover:bg-[var(--green-dark)] hover:-translate-y-0.5"
+                >
+                  Choose Yearly
+                </Link>
+              </div>
             </div>
           </div>
         </div>

@@ -104,8 +104,12 @@ export async function uploadMenu(formData: FormData) {
 
   const file = formData.get("pdf");
 
-  if (!(file instanceof File) || file.size === 0) {
+  if (!(file instanceof File)) {
     dashboardError("Choose a PDF document before uploading.");
+  }
+
+  if (file.size === 0) {
+    dashboardError("The uploaded PDF file is empty or corrupted.");
   }
 
   if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
