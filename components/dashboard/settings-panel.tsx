@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   BarChart3,
   CheckCircle2,
@@ -17,6 +16,7 @@ import {
 import { formatBytes, logoUploadConfig, uploadConfig } from "@/lib/config";
 import type { MenuRecord } from "@/lib/menu-types";
 import PendingSubmitButton from "@/components/ui/pending-submit-button";
+import Link from "next/link";
 
 type SettingsPanelProps = {
   error: string | null;

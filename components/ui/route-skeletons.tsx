@@ -4,42 +4,34 @@ function SkeletonBlock({ className }: { className: string }) {
 
 export function DashboardRouteSkeleton() {
   return (
-    <main className="h-screen overflow-hidden bg-[var(--cream)] text-[var(--charcoal)]">
-      <div className="grid h-screen lg:grid-cols-[280px_1fr]">
-        <aside className="hidden h-screen overflow-hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 lg:block">
-          <div className="flex items-center gap-3">
-            <SkeletonBlock className="h-11 w-11" />
-            <div className="space-y-2">
-              <SkeletonBlock className="h-4 w-28" />
-              <SkeletonBlock className="h-3 w-20" />
-            </div>
-          </div>
-          <div className="mt-9 space-y-2">
-            <SkeletonBlock className="h-11 w-full" />
-            <SkeletonBlock className="h-11 w-full" />
-            <SkeletonBlock className="h-11 w-full" />
-          </div>
-        </aside>
-
-        <section className="h-screen min-h-0 overflow-y-auto">
-          <header className="border-b border-[#e4dbce] bg-[#f7f3eb]/88 px-4 py-4 md:px-8">
-            <SkeletonBlock className="h-4 w-36" />
-            <SkeletonBlock className="mt-3 h-8 w-56" />
-          </header>
-          <div className="px-4 py-6 md:px-8 md:py-8">
-            <div className="grid gap-4 md:grid-cols-3">
-              <SkeletonBlock className="h-32 w-full" />
-              <SkeletonBlock className="h-32 w-full" />
-              <SkeletonBlock className="h-32 w-full" />
-            </div>
-            <div className="mt-6 grid gap-6 xl:grid-cols-[390px_1fr]">
-              <SkeletonBlock className="h-[420px] w-full" />
-              <SkeletonBlock className="h-[520px] w-full" />
-            </div>
-          </div>
-        </section>
+    <div className="px-4 py-6 md:px-8 md:py-8">
+      <div className="grid gap-4 md:grid-cols-3">
+        <SkeletonBlock className="h-32 w-full" />
+        <SkeletonBlock className="h-32 w-full" />
+        <SkeletonBlock className="h-32 w-full" />
       </div>
-    </main>
+      <div className="mt-6 grid gap-6 xl:grid-cols-[390px_1fr]">
+        <SkeletonBlock className="h-[420px] w-full" />
+        <SkeletonBlock className="h-[520px] w-full" />
+      </div>
+    </div>
+  );
+}
+
+export function QrRouteSkeleton() {
+  return (
+    <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:px-8 xl:grid-cols-[430px_1fr]">
+      <SkeletonBlock className="h-[720px] w-full rounded-[1.75rem]" />
+      <div className="rounded-[2rem] border border-[#e4dbce] bg-[#fffdf8] p-5 md:p-8">
+        <SkeletonBlock className="h-5 w-28" />
+        <SkeletonBlock className="mt-4 h-9 w-72" />
+        <SkeletonBlock className="mt-4 h-5 w-full max-w-xl" />
+        <div className="mt-8 grid gap-5 lg:grid-cols-[1fr_360px]">
+          <SkeletonBlock className="h-[460px] w-full" />
+          <SkeletonBlock className="h-40 w-full" />
+        </div>
+      </div>
+    </div>
   );
 }
 
