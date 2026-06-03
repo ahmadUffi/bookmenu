@@ -11,6 +11,7 @@ import {
   PanelLeftOpen,
   QrCode,
   Sparkles,
+  CreditCard,
 } from "lucide-react";
 import { uploadConfig } from "@/lib/config";
 
@@ -28,6 +29,7 @@ const navItems = [
     icon: Sparkles,
     href: "/dashboard/settings",
   },
+  { key: "billing", label: "Billing", icon: CreditCard, href: "/dashboard/billing" },
   { key: "landing", label: "Landing page", icon: FileText, href: "/" },
 ] as const;
 
@@ -54,8 +56,12 @@ export default function DashboardShell({
       ? "qr"
       : pathname.startsWith("/dashboard/settings")
         ? "settings"
-        : "overview";
-  const eyebrow = active === "qr" ? "QR print studio" : "Document workspace";
+        : pathname.startsWith("/dashboard/billing")
+          ? "billing"
+          : "overview";
+
+  const eyebrow =
+    active === "qr" ? "QR print studio" : active === "billing" ? "Billing" : "Document workspace";
 
   return (
     <main className="dashboard-shell-root h-screen overflow-hidden bg-[var(--cream)] text-[var(--charcoal)]">
