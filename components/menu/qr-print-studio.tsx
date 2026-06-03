@@ -15,7 +15,6 @@ import {
 import type { MenuRecord } from "@/lib/menu-types";
 import {
   defaultQrDesign,
-  downloadStyledQrPng,
   type QrDesign,
   type QrEyeShape,
   type QrPieceShape,
@@ -23,8 +22,8 @@ import {
 import {
   downloadPrintTemplatePng,
   getDefaultTemplateText,
+  getPrintTemplateSvg,
   mergeTemplateText,
-  PrintTemplateCard,
   printTemplates,
   type PrintTemplateId,
   type PrintTemplateText,
@@ -181,6 +180,17 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
     [quantity],
   );
   const pages = useMemo(() => chunk(copies, cardsPerSheet), [copies]);
+  const printTemplateImageUrl = useMemo(() => {
+    if (!selectedMenu || !absoluteUrl) return "";
+    const svg = getPrintTemplateSvg({
+      design,
+      menu: selectedMenu,
+      publicUrl: absoluteUrl,
+      templateId,
+      text: templateText,
+    });
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  }, [absoluteUrl, design, selectedMenu, templateId, templateText]);
 
   useEffect(() => {
     if (!selectedMenu) return;
@@ -204,15 +214,6 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
 
   async function downloadQr() {
     if (!selectedMenu || !absoluteUrl) return;
-    if (templateId === "plain") {
-      await downloadStyledQrPng(
-        absoluteUrl,
-        design,
-        `${selectedMenu.slug}-${selectedMenu.documentSlug}-qr.png`,
-      );
-      return;
-    }
-
     await downloadPrintTemplatePng({
       design,
       filename: `${selectedMenu.slug}-${selectedMenu.documentSlug}-${templateId}.png`,
@@ -605,14 +606,15 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
 
         <div className="qr-print-hide grid gap-5 py-8 lg:grid-cols-[1fr_360px] lg:items-center">
           <div className="rounded-2xl border border-[#dbe2ea] bg-white p-5">
-            <div className="mx-auto w-full max-w-[320px]">
-              <PrintTemplateCard
-                design={design}
-                menu={selectedMenu}
-                publicUrl={absoluteUrl}
-                templateId={templateId}
-                text={templateText}
-              />
+            <div className="mx-auto aspect-[5/7] w-full max-w-[320px] overflow-hidden rounded-xl border border-[#dbe2ea] bg-white">
+              {printTemplateImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={printTemplateImageUrl}
+                  alt={`${selectedMenu.title} QR template preview`}
+                  className="h-full w-full object-contain"
+                />
+              ) : null}
             </div>
           </div>
           <div className="rounded-2xl border border-[#dbe2ea] bg-[#fbf7ef] p-4">
@@ -639,15 +641,18 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
               {pageItems.map((copyNumber) => (
                 <article
                   key={copyNumber}
-                  className="qr-print-card h-full overflow-hidden rounded-xl border border-[#dbe2ea] bg-white"
+                  className="qr-print-card flex h-full items-center justify-center overflow-hidden rounded-xl border border-[#dbe2ea] bg-white p-1"
                 >
-                  <PrintTemplateCard
-                    design={design}
-                    menu={selectedMenu}
-                    publicUrl={absoluteUrl}
-                    templateId={templateId}
-                    text={templateText}
-                  />
+                  {printTemplateImageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={printTemplateImageUrl}
+                      alt={`${selectedMenu.title} QR print template`}
+                      className="qr-template-print-image h-full w-full object-contain"
+                    />
+                  ) : (
+                    <div className="h-full w-full" />
+                  )}
                 </article>
               ))}
             </div>
