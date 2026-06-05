@@ -56,11 +56,31 @@ export async function POST(request: Request) {
     }
 
     const parts = order_id.split("_");
-    const userId = parts[1];
+    let userId = parts[1];
     const plan = parts[2];
 
     if (!userId || !plan) {
       return NextResponse.json({ error: "Invalid order ID format" }, { status: 400 });
+    }
+
+    // Decode base64url UUID back to standard 36-character UUID
+    if (userId.length === 22) {
+      try {
+        const hexBack = Buffer.from(userId, "base64url").toString("hex");
+        userId = [
+          hexBack.slice(0, 8),
+          hexBack.slice(8, 12),
+          hexBack.slice(12, 16),
+          hexBack.slice(16, 20),
+          hexBack.slice(20),
+        ].join("-");
+      } catch (e) {
+        console.error("Failed to decode user UUID from base64url:", e);
+        return NextResponse.json(
+          { error: "Invalid user ID encoding in order ID" },
+          { status: 400 }
+        );
+      }
     }
 
     const isSuccess =
