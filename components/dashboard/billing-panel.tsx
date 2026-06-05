@@ -150,7 +150,7 @@ export default function BillingPanel({
   };
 
   return (
-    <main className="h-screen overflow-hidden bg-[var(--cream)] text-[var(--charcoal)]">
+    <>
       {/* Load Midtrans Snap client libraries */}
       <Script
         src={midtransSnapUrl}
@@ -158,98 +158,8 @@ export default function BillingPanel({
         strategy="lazyOnload"
       />
 
-      <div className="grid h-screen lg:grid-cols-[280px_minmax(0,1fr)]">
-        {/* Navigation Sidebar */}
-        <aside className="hidden h-screen overflow-hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 backdrop-blur lg:block">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--charcoal)] text-white">
-              <Sparkles size={19} />
-            </div>
-            <div>
-              <p className="font-semibold tracking-tight">DocLume</p>
-              <p className="text-xs font-medium text-[#73766e]">Document OS</p>
-            </div>
-          </div>
-
-          <nav className="mt-9 space-y-1">
-            <Link
-              href="/dashboard"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
-            >
-              <Home size={18} />
-              Overview
-            </Link>
-            <Link
-              href="/qr"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
-            >
-              <QrCode size={18} />
-              QR codes
-            </Link>
-            <Link
-              href="/dashboard/settings"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
-            >
-              <Sparkles size={18} />
-              Settings
-            </Link>
-            <Link
-              href="/dashboard/billing"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl bg-[var(--charcoal)] px-3 text-left text-sm font-semibold text-white shadow-[0_14px_30px_rgba(31,33,29,0.16)]"
-            >
-              <CreditCard size={18} />
-              Billing
-            </Link>
-            <Link
-              href="/"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
-            >
-              <FileText size={18} />
-              Landing page
-            </Link>
-          </nav>
-
-          <div className="mt-8 rounded-3xl border border-[#e4dbce] bg-[#f8f3eb] p-4">
-            <p className="text-sm font-semibold">Billing Period</p>
-            <div className="mt-2 text-xs leading-5 text-[#666a61]">
-              {activePlan === "free" ? (
-                "You are currently on the Free Tier. Upgrades are active immediately."
-              ) : (
-                <p>
-                  Renewal date:<br />
-                  <span className="font-semibold text-[var(--charcoal)]">{endedAt}</span><br />
-                  via Midtrans gateway.
-                </p>
-              )}
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content Area */}
-        <section className="h-screen min-h-0 min-w-0 overflow-y-auto">
-          {/* Header */}
-          <header className="sticky top-0 z-30 border-b border-[#e4dbce] bg-[#f7f3eb]/88 px-4 py-4 backdrop-blur-xl md:px-8">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-[var(--green)]">
-                  Billing Management
-                </p>
-                <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-                  {initialBusinessName}
-                </h1>
-              </div>
-              <a
-                href="/auth/logout"
-                className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#d9d0c2] bg-white/70 px-4 text-sm font-semibold text-[#4d5149] transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                <LogOut size={16} />
-                Logout
-              </a>
-            </div>
-          </header>
-
-          {/* Sub content page */}
-          <div className="px-4 py-6 md:px-8 md:py-8">
+      {/* Sub content page */}
+      <div className="px-4 py-6 md:px-8 md:py-8">
             {notice ? (
               <div className="mb-6 flex items-center gap-2.5 rounded-2xl border border-[#cfe1cf] bg-[#eef6ed] px-4 py-3 text-sm font-medium text-[var(--green-dark)] shadow-sm transition-all duration-300">
                 <CheckCircle2 size={18} className="shrink-0 text-[var(--green)]" />
@@ -603,6 +513,22 @@ export default function BillingPanel({
                   </div>
                 </div>
 
+                {/* Billing Period Card */}
+                <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm">
+                  <h3 className="font-semibold text-sm tracking-tight uppercase text-[#666a61]">Billing Period</h3>
+                  <div className="mt-4 p-4 rounded-2xl bg-white border border-[#e4dbce] text-xs leading-5 text-[#666a61]">
+                    {activePlan === "free" ? (
+                      "You are currently on the Free Tier. Upgrades are active immediately."
+                    ) : (
+                      <p>
+                        Renewal date:<br />
+                        <span className="font-semibold text-[var(--charcoal)]">{endedAt}</span><br />
+                        via Midtrans gateway.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 {/* Billing Summary notice */}
                 <div className="rounded-[1.75rem] border border-[#e4dbce] bg-white p-5 shadow-sm space-y-4">
                   <div className="flex items-start gap-2.5 text-xs text-[#5f6673] leading-5">
@@ -636,8 +562,6 @@ export default function BillingPanel({
               </aside>
             </div>
           </div>
-        </section>
-      </div>
-    </main>
+        </>
   );
 }
