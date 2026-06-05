@@ -46,8 +46,6 @@ export default async function DashboardBillingPage(
   const menus = mapRestaurantMenus([restaurant]);
 
   const nowStr = new Date().toISOString();
-  console.log("nowStr:", nowStr);
-  console.log("user.id:", user?.id)
   // 1. Fetch active subscription info from Supabase
   const { data: activeSub, error } = await supabase
     .from("subscriptions")
@@ -65,9 +63,6 @@ export default async function DashboardBillingPage(
     .select("id, created_at, plan, price, status")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
-
-  console.log("activeSub:", activeSub);
-  console.log("error:", error);
 
   const activePlan = activeSub ? (activeSub.plan as "monthly" | "yearly") : "free";
   const endedAt = activeSub?.ended_at

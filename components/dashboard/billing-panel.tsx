@@ -260,7 +260,6 @@ export default function BillingPanel({
             {/* Layout divided into Main Section & Usage Sidebar */}
             <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
               {/* Left Column: Plans & History */}
-              <p>{activePlan}</p>
               <div className="space-y-6">
                 {/* Pricing List */}
                 {activePlan === "free" ? (
