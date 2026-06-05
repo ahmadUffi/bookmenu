@@ -158,7 +158,7 @@ export default function BillingPanel({
         strategy="lazyOnload"
       />
 
-      <div className="grid h-screen lg:grid-cols-[280px_1fr]">
+      <div className="grid h-screen lg:grid-cols-[280px_minmax(0,1fr)]">
         {/* Navigation Sidebar */}
         <aside className="hidden h-screen overflow-hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 backdrop-blur lg:block">
           <div className="flex items-center gap-3">
@@ -226,7 +226,7 @@ export default function BillingPanel({
         </aside>
 
         {/* Main Content Area */}
-        <section className="h-screen min-h-0 overflow-y-auto">
+        <section className="h-screen min-h-0 min-w-0 overflow-y-auto">
           {/* Header */}
           <header className="sticky top-0 z-30 border-b border-[#e4dbce] bg-[#f7f3eb]/88 px-4 py-4 backdrop-blur-xl md:px-8">
             <div className="flex items-center justify-between gap-4">
@@ -258,9 +258,9 @@ export default function BillingPanel({
             ) : null}
 
             {/* Layout divided into Main Section & Usage Sidebar */}
-            <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
               {/* Left Column: Plans & History */}
-              <div className="space-y-6">
+              <div className="space-y-6 min-w-0">
                 {/* Pricing List */}
                 {activePlan === "free" ? (
                   <div className="rounded-[1.75rem] border border-[#e4dbce] bg-white p-6 shadow-[var(--shadow-card)]">
@@ -439,47 +439,92 @@ export default function BillingPanel({
                       </p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto bg-white">
-                      <table className="w-full border-collapse text-left text-sm">
-                        <thead>
-                          <tr className="border-b border-[#e4dbce] bg-[#fbf7ef]/50 text-xs font-semibold uppercase tracking-wider text-[#777a72]">
-                            <th className="px-6 py-4">Billing Date</th>
-                            <th className="px-6 py-4">Invoice No</th>
-                            <th className="px-6 py-4">Plan Name</th>
-                            <th className="px-6 py-4">Paid Amount</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4 text-right">Invoice</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#ece4d8] text-[#4d5149]">
-                          {transactions.map((tx) => (
-                            <tr key={tx.id} className="transition hover:bg-[#fbf7ef]/50">
-                              <td className="whitespace-nowrap px-6 py-4 font-medium">{tx.date}</td>
-                              <td className="whitespace-nowrap px-6 py-4 text-[#777a72]">{tx.invoiceNo}</td>
-                              <td className="whitespace-nowrap px-6 py-4 font-medium">{tx.planName}</td>
-                              <td className="whitespace-nowrap px-6 py-4 font-semibold text-[var(--charcoal)]">{tx.amount}</td>
-                              <td className="whitespace-nowrap px-6 py-4">
-                                <span className="inline-flex items-center gap-1 rounded-full border border-[#cfe1cf] bg-[#eef6ed] px-2.5 py-0.5 text-xs font-medium text-[var(--green-dark)]">
-                                  <span className={`h-1.5 w-1.5 rounded-full ${
-                                    tx.status === "Paid" ? "bg-[var(--green)]" : "bg-yellow-500"
-                                  }`}></span>
-                                  {tx.status}
-                                </span>
-                              </td>
-                              <td className="whitespace-nowrap px-6 py-4 text-right">
-                                <button
-                                  onClick={() => handleDownloadInvoice(tx.invoiceNo)}
-                                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d9d0c2] bg-white text-[#4d5149] transition hover:-translate-y-0.5 hover:bg-[#fbf7ef] hover:shadow-xs"
-                                  title="Download Invoice"
-                                >
-                                  <Download size={14} />
-                                </button>
-                              </td>
+                    <>
+                      {/* Desktop View (Table) */}
+                      <div className="hidden md:block overflow-x-auto bg-white">
+                        <table className="w-full border-collapse text-left text-sm">
+                          <thead>
+                            <tr className="border-b border-[#e4dbce] bg-[#fbf7ef]/50 text-xs font-semibold uppercase tracking-wider text-[#777a72]">
+                              <th className="px-6 py-4">Billing Date</th>
+                              <th className="px-6 py-4">Invoice No</th>
+                              <th className="px-6 py-4">Plan Name</th>
+                              <th className="px-6 py-4">Paid Amount</th>
+                              <th className="px-6 py-4">Status</th>
+                              <th className="px-6 py-4 text-right">Invoice</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody className="divide-y divide-[#ece4d8] text-[#4d5149]">
+                            {transactions.map((tx) => (
+                              <tr key={tx.id} className="transition hover:bg-[#fbf7ef]/50">
+                                <td className="whitespace-nowrap px-6 py-4 font-medium">{tx.date}</td>
+                                <td className="whitespace-nowrap px-6 py-4 text-[#777a72]">{tx.invoiceNo}</td>
+                                <td className="whitespace-nowrap px-6 py-4 font-medium">{tx.planName}</td>
+                                <td className="whitespace-nowrap px-6 py-4 font-semibold text-[var(--charcoal)]">{tx.amount}</td>
+                                <td className="whitespace-nowrap px-6 py-4">
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-[#cfe1cf] bg-[#eef6ed] px-2.5 py-0.5 text-xs font-medium text-[var(--green-dark)]">
+                                    <span className={`h-1.5 w-1.5 rounded-full ${
+                                      tx.status === "Paid" ? "bg-[var(--green)]" : "bg-yellow-500"
+                                    }`}></span>
+                                    {tx.status}
+                                  </span>
+                                </td>
+                                <td className="whitespace-nowrap px-6 py-4 text-right">
+                                  <button
+                                    onClick={() => handleDownloadInvoice(tx.invoiceNo)}
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d9d0c2] bg-white text-[#4d5149] transition hover:-translate-y-0.5 hover:bg-[#fbf7ef] hover:shadow-xs"
+                                    title="Download Invoice"
+                                  >
+                                    <Download size={14} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile View (Horizontal Slide/Carousel of Cards) */}
+                      <div className="md:hidden flex gap-4 overflow-x-auto pb-6 pt-2 px-4 snap-x snap-mandatory bg-white scroll-smooth">
+                        {transactions.map((tx) => (
+                          <div
+                            key={tx.id}
+                            className="min-w-[260px] sm:min-w-[300px] snap-center rounded-2xl border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-xs space-y-4 flex flex-col justify-between"
+                          >
+                            <div className="flex justify-between items-start gap-2">
+                              <div>
+                                <p className="text-[10px] font-bold text-[#777a72] uppercase tracking-wider">{tx.date}</p>
+                                <h4 className="font-bold text-sm text-[var(--charcoal)] mt-1">{tx.planName}</h4>
+                              </div>
+                              <span className="inline-flex items-center gap-1 rounded-full border border-[#cfe1cf] bg-[#eef6ed] px-2.5 py-0.5 text-xs font-medium text-[var(--green-dark)] shrink-0">
+                                <span className={`h-1.5 w-1.5 rounded-full ${
+                                  tx.status === "Paid" ? "bg-[var(--green)]" : "bg-yellow-500"
+                                }`}></span>
+                                {tx.status}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[#ece4d8] text-xs">
+                              <div>
+                                <p className="text-[9px] text-[#777a72] uppercase font-bold tracking-wider">Invoice No</p>
+                                <p className="font-semibold text-[var(--charcoal)] truncate">{tx.invoiceNo}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-[9px] text-[#777a72] uppercase font-bold tracking-wider">Amount</p>
+                                <p className="font-bold text-[var(--charcoal)]">{tx.amount}</p>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => handleDownloadInvoice(tx.invoiceNo)}
+                              className="mt-2 flex w-full h-10 items-center justify-center gap-2 rounded-xl border border-[#d9d0c2] bg-white text-xs font-semibold text-[#4d5149] transition hover:bg-[#fbf7ef] active:scale-95"
+                            >
+                              <Download size={14} />
+                              Download Invoice
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
