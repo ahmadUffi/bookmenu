@@ -54,6 +54,19 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
 
   const menus = mapRestaurantMenus(restaurants);
 
+  const nowStr = new Date().toISOString();
+  const { data: activeSub } = await supabase
+    .from("subscriptions")
+    .select("plan")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .gt("ended_at", nowStr)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const plan = activeSub?.plan || "free";
+
   const businessName = restaurants?.[0]?.restaurant_name ?? "";
   return (
     <DashboardApp
@@ -63,6 +76,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
       message={message}
       uploadMenuAction={uploadMenu}
       error={error}
+      plan={plan}
     />
   );
 }

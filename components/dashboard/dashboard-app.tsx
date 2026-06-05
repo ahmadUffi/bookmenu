@@ -32,6 +32,7 @@ type DashboardAppProps = {
   initialMenus: MenuRecord[];
   message: string | null;
   uploadMenuAction: (formData: FormData) => void;
+  plan: string;
 };
 
 const navItems = [
@@ -49,8 +50,12 @@ export default function DashboardApp({
   initialMenus,
   message,
   uploadMenuAction,
+  plan,
 }: DashboardAppProps) {
   const menus = initialMenus;
+  const uploadLimit = plan === "monthly" ? 5 : plan === "yearly" ? 10 : 1;
+  const isLimitReached = menus.length >= uploadLimit;
+
   const restaurantName = initialBusinessName || initialMenus[0]?.restaurantName || "";
   const [menuTitle, setMenuTitle] = useState("Product Catalog");
   const [localError, setLocalError] = useState<string | null>(null);
@@ -146,6 +151,11 @@ export default function DashboardApp({
                     action={uploadMenuAction}
                     encType="multipart/form-data"
                     onSubmit={(event) => {
+                      if (isLimitReached) {
+                        event.preventDefault();
+                        setLocalError(`Upload limit reached. Your plan allows up to ${uploadLimit} PDF document${uploadLimit === 1 ? "" : "s"}.`);
+                        return;
+                      }
                       if (localError || !selectedFile) {
                         event.preventDefault();
                       }
@@ -153,8 +163,8 @@ export default function DashboardApp({
                     className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-[var(--shadow-card)]"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--green-soft)] text-[var(--green)]">
-                        <Upload size={21} />
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${isLimitReached ? "bg-red-50 text-red-500" : "bg-[var(--green-soft)] text-[var(--green)]"}`}>
+                        {isLimitReached ? <AlertCircle size={21} /> : <Upload size={21} />}
                       </div>
                       <div>
                         <h2 className="font-semibold">Upload PDF document</h2>
@@ -174,18 +184,24 @@ export default function DashboardApp({
                         name="title"
                         value={menuTitle}
                         onChange={(event) => setMenuTitle(event.target.value)}
-                        className="mt-2 min-h-12 w-full rounded-2xl border border-[#ded5c7] bg-[#fbf7ef] px-4 outline-none transition focus:border-[var(--green)] focus:bg-white focus:ring-4 focus:ring-[#426b4f]/15"
+                        className={`mt-2 min-h-12 w-full rounded-2xl border border-[#ded5c7] bg-[#fbf7ef] px-4 outline-none transition ${
+                          isLimitReached
+                            ? "cursor-not-allowed opacity-60"
+                            : "focus:border-[var(--green)] focus:bg-white focus:ring-4 focus:ring-[#426b4f]/15"
+                        }`}
                         required
+                        disabled={isLimitReached}
                       />
                     </label>
 
                     <label
-                      onDragEnter={() => setIsDragging(true)}
+                      onDragEnter={() => !isLimitReached && setIsDragging(true)}
                       onDragLeave={() => setIsDragging(false)}
                       onDragOver={(event) => event.preventDefault()}
                       onDrop={(event) => {
                         event.preventDefault();
                         setIsDragging(false);
+                        if (isLimitReached) return;
                         const file = event.dataTransfer.files?.[0] ?? null;
                         if (fileRef.current && event.dataTransfer.files.length) {
                           fileRef.current.files = event.dataTransfer.files;
@@ -193,9 +209,11 @@ export default function DashboardApp({
                         handleFile(file);
                       }}
                       className={`mt-5 flex min-h-[170px] flex-col items-center justify-center rounded-3xl border border-dashed p-5 text-center transition ${
-                        isDragging
+                        isLimitReached
+                          ? "border-red-200 bg-red-50/20 cursor-not-allowed"
+                          : isDragging
                           ? "border-[var(--green)] bg-[#eef6ed]"
-                          : "border-[#d3c8b8] bg-[#fbf7ef]"
+                          : "border-[#d3c8b8] bg-[#fbf7ef] hover:border-[#cbd5e1] cursor-pointer"
                       }`}
                     >
                       <input
@@ -205,20 +223,25 @@ export default function DashboardApp({
                         accept="application/pdf,.pdf"
                         className="sr-only"
                         required
+                        disabled={isLimitReached}
                         onChange={(event) =>
                           handleFile(event.target.files?.[0] ?? null)
                         }
                       />
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[var(--green)] shadow-sm">
-                        <FileText size={22} />
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ${isLimitReached ? "text-red-500" : "text-[var(--green)]"}`}>
+                        {isLimitReached ? <AlertCircle size={22} /> : <FileText size={22} />}
                       </div>
                       <p className="mt-4 text-sm font-semibold">
-                        Drop PDF here or tap to browse
+                        {isLimitReached
+                          ? "Upload limit reached"
+                          : "Drop PDF here or tap to browse"}
                       </p>
                       <p className="mt-1 text-xs text-[#777a72]">
-                        PDF only. Pages render in the public showcase viewer.
+                        {isLimitReached
+                          ? `Upgrade plan to upload more than ${uploadLimit} file${uploadLimit === 1 ? "" : "s"}.`
+                          : "PDF only. Pages render in the public showcase viewer."}
                       </p>
-                      {selectedFile ? (
+                      {selectedFile && !isLimitReached ? (
                         <div className="mt-4 w-full rounded-2xl border border-[#e1d8ca] bg-white p-3 text-left">
                           <div className="flex items-center gap-3">
                             <div className="flex h-12 w-10 items-center justify-center rounded-xl bg-[#f1ebe1]">
@@ -238,14 +261,19 @@ export default function DashboardApp({
                     </label>
 
                     <PendingSubmitButton
-                      className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--green)] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--green-dark)]"
+                      className={`mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold text-white transition ${
+                        isLimitReached
+                          ? "bg-gray-300 text-gray-400 cursor-not-allowed"
+                          : "bg-[var(--green)] hover:-translate-y-0.5 hover:bg-[var(--green-dark)]"
+                      }`}
                       pendingText="Uploading"
-                      disabled={!!localError || !selectedFile}
+                      disabled={!!localError || !selectedFile || isLimitReached}
                     >
                       <Upload size={17} />
                       Upload document
                     </PendingSubmitButton>
                   </form>
+
 
                   <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm">
                     <h2 className="font-semibold">QR management</h2>

@@ -155,6 +155,41 @@ export async function uploadMenu(formData: FormData) {
     restaurant = createdRestaurant;
   }
 
+  // Enforce upload limits based on active subscription plan
+  const nowStr = new Date().toISOString();
+  const { data: activeSub } = await supabase
+    .from("subscriptions")
+    .select("plan")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .gt("ended_at", nowStr)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const plan = activeSub?.plan || "free";
+  let uploadLimit = 1;
+  if (plan === "monthly") {
+    uploadLimit = 5;
+  } else if (plan === "yearly") {
+    uploadLimit = 10;
+  }
+
+  const { count, error: countError } = await supabase
+    .from("menus")
+    .select("id", { count: "exact", head: true })
+    .eq("restaurant_id", restaurant.id);
+
+  if (countError) {
+    dashboardError("Unable to verify current document count.");
+  }
+
+  if (count !== null && count >= uploadLimit) {
+    dashboardError(
+      `Upload limit reached. Your active plan (${plan}) allows a maximum of ${uploadLimit} PDF document${uploadLimit === 1 ? "" : "s"}.`
+    );
+  }
+
   const documentSlug = await createUniqueDocumentSlug(
     supabase,
     restaurant.id,
