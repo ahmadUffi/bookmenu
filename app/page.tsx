@@ -93,22 +93,25 @@ const useCases = ["Menu restoran", "Katalog produk", "Brosur promosi", "Proposal
 
 const samplePages = [
   {
-    title: "Signature Menu",
-    subtitle: "Makanan favorit pelanggan",
+    title: "Menu Restoran",
+    subtitle: "Preview PDF menu",
     accent: "bg-[#f97316]",
     panel: "bg-[#fff7ed]",
+    file: "/sample-menu.pdf",
   },
   {
-    title: "Seasonal Picks",
-    subtitle: "Promo dan paket hari ini",
+    title: "Katalog Produk",
+    subtitle: "Preview PDF katalog",
     accent: "bg-[#0ea5e9]",
     panel: "bg-[#eff6ff]",
+    file: "/sample-catalog.pdf",
   },
   {
-    title: "Drink List",
-    subtitle: "Kopi, teh, dan minuman dingin",
+    title: "Brosur Promo",
+    subtitle: "Preview PDF brosur",
     accent: "bg-[#14b8a6]",
     panel: "bg-[#f0fdfa]",
+    file: "/sample-brochure.pdf",
   },
 ];
 
@@ -345,39 +348,60 @@ export default function Home() {
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.86fr_1.14fr] lg:items-center">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0ea5e9]">
-              Contoh flip
+              Preview PDF
             </p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[#082f49] md:text-5xl">
-              Landing page langsung menunjukkan rasa flipbook-nya.
+              Tiga contoh PDF berbeda, tetap terasa seperti katalog digital.
             </h2>
             <p className="mt-5 text-lg leading-8 text-slate-600">
-              Area contoh ini disiapkan untuk menampilkan PDF sample dari
-              folder public nanti. Untuk sekarang, tampilannya memberi gambaran
-              cara pelanggan membaca menu digital tanpa membuka file mentah.
+              Taruh tiga file sample di folder public. Pengunjung bisa melihat
+              contoh menu, katalog, dan brosur tanpa membuka file mentah.
             </p>
+            <div className="mt-7 rounded-3xl border border-sky-100 bg-white/70 p-4 text-sm leading-6 text-slate-600">
+              File yang dibaca:{" "}
+              <span className="font-semibold text-[#0c4a6e]">/sample-menu.pdf</span>,{" "}
+              <span className="font-semibold text-[#0c4a6e]">/sample-catalog.pdf</span>, dan{" "}
+              <span className="font-semibold text-[#0c4a6e]">/sample-brochure.pdf</span>.
+            </div>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             {samplePages.map((page, index) => (
               <article
                 key={page.title}
-                className={`rounded-3xl border border-sky-100 p-5 shadow-sm ${page.panel}`}
+                className={`overflow-hidden rounded-3xl border border-sky-100 shadow-sm ${page.panel}`}
               >
-                <div className={`h-2 w-14 rounded-full ${page.accent}`} />
-                <p className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Preview 0{index + 1}
-                </p>
-                <h3 className="mt-3 text-xl font-semibold text-[#082f49]">
-                  {page.title}
-                </h3>
-                <p className="mt-2 min-h-12 text-sm leading-6 text-slate-600">
-                  {page.subtitle}
-                </p>
-                <div className="mt-7 aspect-[3/4] rounded-2xl border border-white/70 bg-white/70 p-4">
-                  <div className="h-24 rounded-xl bg-slate-100" />
-                  <div className="mt-5 space-y-2">
-                    <div className="h-2 rounded-full bg-slate-200" />
-                    <div className="h-2 w-2/3 rounded-full bg-slate-200" />
-                  </div>
+                <div className="p-5">
+                  <div className={`h-2 w-14 rounded-full ${page.accent}`} />
+                  <p className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Preview 0{index + 1}
+                  </p>
+                  <h3 className="mt-3 text-xl font-semibold text-[#082f49]">
+                    {page.title}
+                  </h3>
+                  <p className="mt-2 min-h-12 text-sm leading-6 text-slate-600">
+                    {page.subtitle}
+                  </p>
+                </div>
+                <div className="mx-5 mb-5 overflow-hidden rounded-2xl border border-white/70 bg-white">
+                  <object
+                    data={`${page.file}#toolbar=0&navpanes=0&scrollbar=0`}
+                    type="application/pdf"
+                    className="h-[320px] w-full"
+                    aria-label={`Preview PDF ${page.title}`}
+                  >
+                    <div className="flex h-[320px] flex-col items-center justify-center bg-white p-5 text-center">
+                      <FileText className="text-[#0ea5e9]" size={30} />
+                      <p className="mt-3 text-sm font-semibold text-[#082f49]">
+                        Preview PDF belum tersedia.
+                      </p>
+                      <a
+                        href={page.file}
+                        className="mt-4 rounded-xl bg-[#082f49] px-4 py-2 text-xs font-semibold text-white"
+                      >
+                        Buka PDF
+                      </a>
+                    </div>
+                  </object>
                 </div>
               </article>
             ))}
