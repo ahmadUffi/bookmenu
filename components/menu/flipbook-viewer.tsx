@@ -34,6 +34,7 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
   const [page, setPage] = useState(0);
   const [pageRatio, setPageRatio] = useState(390 / 550);
   const [bookSize, setBookSize] = useState({ width: 390, height: 550 });
+  const [isMobileBook, setIsMobileBook] = useState(false);
   const [error, setError] = useState(false);
   const renderPixelRatio =
     typeof window === "undefined"
@@ -75,12 +76,17 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
     const updateSize = () => {
       const vw = frame.clientWidth;
       const mobile = window.matchMedia("(max-width: 767px)").matches;
+      setIsMobileBook(mobile);
       const viewportHeight =
         window.visualViewport?.height ?? window.innerHeight;
       const availableHeight = Math.max(frame.clientHeight, 320);
-      const vh = mobile ? availableHeight : Math.max(viewportHeight - 240, 320);
+      const vh = mobile
+        ? availableHeight
+        : Math.max(Math.min(availableHeight, viewportHeight - 240), 320);
       const widthByHeight = Math.floor(vh * pageRatio);
-      const nextWidth = Math.max(260, Math.min(vw, widthByHeight, 980));
+      const horizontalGap = mobile ? 0 : 36;
+      const widthByFrame = mobile ? vw : Math.floor((vw - horizontalGap) / 2);
+      const nextWidth = Math.max(260, Math.min(widthByFrame, widthByHeight, 720));
       const nextHeight = Math.floor(nextWidth / pageRatio);
       setBookSize((current) =>
         current.width === nextWidth && current.height === nextHeight
@@ -164,7 +170,7 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
               startPage={0}
               drawShadow
               flippingTime={650}
-              usePortrait
+              usePortrait={isMobileBook}
               startZIndex={0}
               autoSize
               maxShadowOpacity={0.18}

@@ -75,7 +75,7 @@ export default async function PublicDocumentPage(
 
   return (
     <main className="h-[100dvh] overflow-hidden bg-white px-2 py-0 sm:px-4 sm:py-4 md:h-auto md:min-h-screen md:overflow-visible">
-      <section className="mx-auto h-full w-full max-w-7xl">
+      <section className="mx-auto h-full w-full ">
         <FlipbookViewer pdfUrl={menu.pdfUrl} />
       </section>
     </main>
