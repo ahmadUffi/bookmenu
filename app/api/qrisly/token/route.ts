@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
@@ -35,16 +36,23 @@ export async function POST(request: Request) {
     const apiKey = process.env.QRISLY_API_KEY || "";
     const baseUrl = process.env.QRISLY_BASE_URL || "https://api-sandbox.collaborator.komerce.id/user/api/v1/qrisly";
 
-    // Setup webhook callback url
-    const origin = new URL(request.url).origin;
-    const webhookUrl = `${origin}/api/qrisly/webhook`;
-
     // If API Key is not set or is mock/development, return a mock QRIS response for simulation
     if (!apiKey || apiKey === "mock-qrisly-api-key-12345" || apiKey.startsWith("mock-")) {
       console.log("Using Mock QRISly Integration (Development Mode)");
       const mockQrContent = `000201010212430038000000000000000000000000000000000052045999530336054${price}5802ID5918BookMenu Subscription6009Yogyakarta61055512362070703A016304abcd`;
       const mockQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(mockQrContent)}`;
       const mockHistoryId = `mock_hist_${Date.now()}`;
+
+      // Insert pending subscription record even in mock mode for consistency
+      const adminDb = createAdminClient();
+      await adminDb.from("subscriptions").insert({
+        user_id: user.id,
+        plan: plan,
+        price: price,
+        status: "pending",
+        started_at: new Date().toISOString(),
+        ended_at: null,
+      });
 
       return NextResponse.json({
         qr_url: mockQrUrl,
@@ -60,10 +68,14 @@ export async function POST(request: Request) {
     // Endpoint: POST {baseUrl}/generate-qris
     const qrislyUrl = `${baseUrl.replace(/\/$/, "")}/generate-qris`;
 
+    const qrisIdVal = process.env.QRISLY_QRIS_ID || "261";
+    const qrisId = /^\d+$/.test(qrisIdVal) ? parseInt(qrisIdVal, 10) : qrisIdVal;
+
     const payload = {
+      qris_id: qrisId,
       amount: price,
-      reference_id: orderId,
-      callback_url: webhookUrl
+      output_type: "string",
+      unique_amount: true
     };
 
     const response = await fetch(qrislyUrl, {
@@ -71,8 +83,7 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "key": apiKey,
-        "Authorization": `Bearer ${apiKey}`
+        "X-API-Key": apiKey
       },
       body: JSON.stringify(payload)
     });
@@ -87,17 +98,30 @@ export async function POST(request: Request) {
     }
 
     const result = await response.json();
-    
-    // Standardize the response fields
-    // QRISly typically returns qr_url, qr_content, and history_id.
     const data = result.data || result;
 
+    const qrContent = data.qris_string || data.qr_content || "";
+    const qrUrl = data.qr_url || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrContent)}`;
+    const finalAmount = Number(data.final_amount || data.amount || price);
+    const historyId = String(data.history_id || data.id || `hist_${Date.now()}`);
+
+    // Insert pending subscription record so that webhook and/or manual status check can find it
+    const adminDb = createAdminClient();
+    await adminDb.from("subscriptions").insert({
+      user_id: user.id,
+      plan: plan,
+      price: finalAmount,
+      status: "pending",
+      started_at: new Date().toISOString(),
+      ended_at: null,
+    });
+
     return NextResponse.json({
-      qr_url: data.qr_url || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.qr_content || "")}`,
-      qr_content: data.qr_content,
-      history_id: data.history_id || data.id || `hist_${Date.now()}`,
+      qr_url: qrUrl,
+      qr_content: qrContent,
+      history_id: historyId,
       order_id: orderId,
-      amount: price
+      amount: finalAmount
     });
   } catch (error) {
     console.error("QRISly token generation error:", error);

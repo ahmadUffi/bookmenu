@@ -7,47 +7,48 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log("Webhook body:", body);
 
-    // QRISly callback fields
-    const order_id = body.reference_id || body.order_id || body.external_id;
-    const payment_status = body.status || body.payment_status || body.transaction_status;
-    const amount = body.amount || body.gross_amount || body.price;
+    // QRISly webhook payload structure:
+    // {
+    //   "event": "payment.success",
+    //   "timestamp": "2025-01-14T10:35:22Z",
+    //   "data": {
+    //     "history_id": "8c5b8e8d-7b22-3e31-7a0e-0d5a2d1d6c09",
+    //     "qris_id": "9d6c9f9e-8c33-4f42-8b1f-0e6a3e2e7d10",
+    //     "amount": 100001,
+    //     "original_amount": 100000,
+    //     "status": "paid",
+    //     ...
+    //   }
+    // }
 
-    if (!order_id || !payment_status) {
+    const event = body.event;
+    const eventData = body.data || {};
+    const historyId = eventData.history_id;
+    const amount = eventData.amount; // This is the final unique amount (e.g. 9003)
+    const payment_status = eventData.status;
+
+    if (!historyId || !payment_status || amount === undefined) {
       return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
     }
 
-    // Process only subscription orders
-    if (!order_id.startsWith("SUB_")) {
-      return NextResponse.json({ message: "Not a subscription order" });
+    const supabase = createAdminClient();
+
+    // Look up the pending subscription by the unique amount
+    const { data: pendingSub } = await supabase
+      .from("subscriptions")
+      .select("id, user_id, plan")
+      .eq("status", "pending")
+      .eq("price", amount)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!pendingSub) {
+      console.log(`No pending subscription found for amount: ${amount}`);
+      return NextResponse.json({ success: true, message: "No pending subscription found" });
     }
 
-    const parts = order_id.split("_");
-    let userId = parts[1];
-    const plan = parts[2];
-
-    if (!userId || !plan) {
-      return NextResponse.json({ error: "Invalid order ID format" }, { status: 400 });
-    }
-
-    // Decode base64url UUID back to standard UUID
-    if (userId.length === 22) {
-      try {
-        const hexBack = Buffer.from(userId, "base64url").toString("hex");
-        userId = [
-          hexBack.slice(0, 8),
-          hexBack.slice(8, 12),
-          hexBack.slice(12, 16),
-          hexBack.slice(16, 20),
-          hexBack.slice(20),
-        ].join("-");
-      } catch (e) {
-        console.error("Failed to decode user UUID from base64url:", e);
-        return NextResponse.json(
-          { error: "Invalid user ID encoding in order ID" },
-          { status: 400 }
-        );
-      }
-    }
+    const { user_id: userId, plan, id: subId } = pendingSub;
 
     const isSuccess =
       payment_status === "success" ||
@@ -57,8 +58,6 @@ export async function POST(request: Request) {
       payment_status === "SUCCESS";
 
     if (isSuccess) {
-      const supabase = createAdminClient();
-
       const startedAt = new Date();
       const endedAt = new Date();
       if (plan === "monthly") {
@@ -79,18 +78,18 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (!existingSub) {
-        // 1. Create subscription record
-        const { error: subError } = await supabase.from("subscriptions").insert({
-          user_id: userId,
-          plan: plan,
-          price: amount ? parseFloat(amount) : (plan === "monthly" ? 9000 : 99000),
-          status: "active",
-          started_at: startedAt.toISOString(),
-          ended_at: endedAt.toISOString(),
-        });
+        // 1. Update the pending subscription record to active
+        const { error: subError } = await supabase
+          .from("subscriptions")
+          .update({
+            status: "active",
+            started_at: startedAt.toISOString(),
+            ended_at: endedAt.toISOString(),
+          })
+          .eq("id", subId);
 
         if (subError) {
-          console.error("Error creating subscription record:", subError);
+          console.error("Error activating subscription record:", subError);
           return NextResponse.json(
             { error: "Failed to record subscription" },
             { status: 500 },
@@ -130,9 +129,9 @@ export async function POST(request: Request) {
           .update({ status: "inactive" })
           .eq("user_id", userId)
           .eq("status", "active")
-          .not("started_at", "eq", startedAt.toISOString());
+          .not("id", "eq", subId);
 
-        console.log(`Successfully recorded subscription for user ${userId}: ${plan}`);
+        console.log(`Successfully activated subscription for user ${userId}: ${plan}`);
       } else {
         console.log(`Subscription already exists for user ${userId}: ${plan}`);
       }
@@ -141,22 +140,22 @@ export async function POST(request: Request) {
       payment_status === "expire" ||
       payment_status === "deny" ||
       payment_status === "failed" ||
-      payment_status === "FAILED"
+      payment_status === "FAILED" ||
+      payment_status === "expired" ||
+      payment_status === "cancelled"
     ) {
-      const supabase = createAdminClient();
-      // Record payment failure in subscriptions log
-      await supabase.from("subscriptions").insert({
-        user_id: userId,
-        plan: plan,
-        price: amount ? parseFloat(amount) : (plan === "monthly" ? 9000 : 99000),
-        status: payment_status.toLowerCase(),
-        started_at: new Date().toISOString(),
-        ended_at: new Date().toISOString(),
-      });
+      // Update pending subscription record to failed/expired/etc.
+      await supabase
+        .from("subscriptions")
+        .update({
+          status: payment_status.toLowerCase(),
+          ended_at: new Date().toISOString(),
+        })
+        .eq("id", subId);
       console.log(`Failed subscription payment for user ${userId}: ${payment_status}`);
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: "Webhook received and processed" });
   } catch (error) {
     console.error("QRISly webhook processing error:", error);
     return NextResponse.json(

@@ -43,8 +43,7 @@ export async function GET(request: Request) {
       const response = await fetch(qrislyUrl, {
         method: "GET",
         headers: {
-          "key": apiKey,
-          "Authorization": `Bearer ${apiKey}`,
+          "X-API-Key": apiKey,
           "Accept": "application/json"
         }
       });
@@ -109,15 +108,38 @@ export async function GET(request: Request) {
           .maybeSingle();
 
         if (!existingSub) {
-          // Create subscription record
-          await adminDb.from("subscriptions").insert({
-            user_id: userId,
-            plan: plan,
-            price: price,
-            status: "active",
-            started_at: startedAt.toISOString(),
-            ended_at: endedAt.toISOString(),
-          });
+          // Look for a pending subscription first
+          const { data: pendingSub } = await adminDb
+            .from("subscriptions")
+            .select("id, price")
+            .eq("user_id", userId)
+            .eq("plan", plan)
+            .eq("status", "pending")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (pendingSub) {
+            // Update pending to active
+            await adminDb
+              .from("subscriptions")
+              .update({
+                status: "active",
+                started_at: startedAt.toISOString(),
+                ended_at: endedAt.toISOString(),
+              })
+              .eq("id", pendingSub.id);
+          } else {
+            // Create subscription record if none pending
+            await adminDb.from("subscriptions").insert({
+              user_id: userId,
+              plan: plan,
+              price: price,
+              status: "active",
+              started_at: startedAt.toISOString(),
+              ended_at: endedAt.toISOString(),
+            });
+          }
 
           // Reset usage limit
           const { data: existingUsage } = await adminDb
