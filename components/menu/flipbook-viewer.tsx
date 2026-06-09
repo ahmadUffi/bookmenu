@@ -112,11 +112,11 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
       const availableHeight = Math.max(frame.clientHeight, 320);
       const vh = mobile
         ? availableHeight
-        : Math.max(Math.min(availableHeight, viewportHeight - 240), 320);
+        : Math.max(Math.min(availableHeight, viewportHeight - 150), 420);
       const widthByHeight = Math.floor(vh * pageRatio);
-      const horizontalGap = mobile ? 0 : 36;
+      const horizontalGap = mobile ? 0 : 20;
       const widthByFrame = mobile ? vw : Math.floor((vw - horizontalGap) / 2);
-      const nextWidth = Math.max(260, Math.min(widthByFrame, widthByHeight, 720));
+      const nextWidth = Math.max(260, Math.min(widthByFrame, widthByHeight, 860));
       const nextHeight = Math.floor(nextWidth / pageRatio);
       setBookSize((current) =>
         current.width === nextWidth && current.height === nextHeight
@@ -161,7 +161,7 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
       <div
         ref={frameRef}
-        className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-none border-0 bg-white p-0 md:rounded-[1.4rem] md:border md:border-[#dbeafe] md:p-2 sm:rounded-[2rem] sm:p-3"
+        className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-none border-0 bg-white p-0 md:rounded-[1.25rem] md:p-1 sm:rounded-[1.5rem] sm:p-2"
       >
         <Document
           file={pdfUrl}
