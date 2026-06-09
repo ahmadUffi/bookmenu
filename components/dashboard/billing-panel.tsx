@@ -78,7 +78,7 @@ export default function BillingPanel({
       name: "Yearly Plan",
       price: "Rp99.000,00",
       period: "year",
-      pdfLimit: 10,
+      pdfLimit: 5,
       scanLimit: "Unlimited",
       scansUsed: 1240,
     },
@@ -273,7 +273,7 @@ export default function BillingPanel({
                           <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
                             <li className="flex items-center gap-1.5">
                               <Check size={14} className="text-[var(--green)] shrink-0" />
-                              <span>10x PDF upload</span>
+                              <span>5x PDF upload</span>
                             </li>
                             <li className="flex items-center gap-1.5">
                               <Check size={14} className="text-[var(--green)] shrink-0" />

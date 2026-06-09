@@ -172,7 +172,7 @@ export async function uploadMenu(formData: FormData) {
   if (plan === "monthly") {
     uploadLimit = 5;
   } else if (plan === "yearly") {
-    uploadLimit = 10;
+    uploadLimit = 5;
   }
 
   const { count, error: countError } = await supabase
