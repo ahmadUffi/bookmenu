@@ -102,21 +102,21 @@ export default function DashboardApp({
     if (!file) return;
 
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      setLocalError("Only PDF files are accepted.");
+      setLocalError("Hanya file PDF yang bisa diupload.");
       return;
     }
 
     if (file.size === 0) {
-      setLocalError("The selected file is empty or corrupted.");
+      setLocalError("File yang dipilih kosong atau rusak.");
       return;
     }
 
     if (file.size > uploadConfig.maxPdfBytes) {
-      setLocalError(`PDF is too large. Limit is ${formatBytes(uploadConfig.maxPdfBytes)}.`);
+      setLocalError(`PDF terlalu besar. Batas maksimal ${formatBytes(uploadConfig.maxPdfBytes)}.`);
       return;
     }
 
-    setLocalMessage("PDF ready to upload.");
+    setLocalMessage("PDF siap diupload.");
   }
 
   return (
@@ -153,7 +153,7 @@ export default function DashboardApp({
                     onSubmit={(event) => {
                       if (isLimitReached) {
                         event.preventDefault();
-                        setLocalError(`Upload limit reached. Your plan allows up to ${uploadLimit} PDF document${uploadLimit === 1 ? "" : "s"}.`);
+                        setLocalError(`Batas upload tercapai. Paket kamu hanya mendukung ${uploadLimit} dokumen PDF.`);
                         return;
                       }
                       if (localError || !selectedFile) {
@@ -167,9 +167,9 @@ export default function DashboardApp({
                         {isLimitReached ? <AlertCircle size={21} /> : <Upload size={21} />}
                       </div>
                       <div>
-                        <h2 className="font-semibold">Upload PDF document</h2>
+                        <h2 className="font-semibold">Upload dokumen PDF</h2>
                         <p className="text-sm text-[#666a61]">
-                          Limit {formatBytes(uploadConfig.maxPdfBytes)}
+                          Maksimal {formatBytes(uploadConfig.maxPdfBytes)}
                         </p>
                       </div>
                     </div>
@@ -233,13 +233,13 @@ export default function DashboardApp({
                       </div>
                       <p className="mt-4 text-sm font-semibold">
                         {isLimitReached
-                          ? "Upload limit reached"
-                          : "Drop PDF here or tap to browse"}
+                          ? "Batas upload tercapai"
+                          : "Tarik PDF ke sini atau klik untuk pilih"}
                       </p>
                       <p className="mt-1 text-xs text-[#777a72]">
                         {isLimitReached
-                          ? `Upgrade plan to upload more than ${uploadLimit} file${uploadLimit === 1 ? "" : "s"}.`
-                          : "PDF only. Pages render in the public showcase viewer."}
+                          ? `Upgrade paket untuk upload lebih dari ${uploadLimit} file.`
+                          : `PDF minimal ${formatBytes(uploadConfig.pdfCompressionThresholdBytes)} akan dioptimalkan sebelum upload.`}
                       </p>
                       {selectedFile && !isLimitReached ? (
                         <div className="mt-4 w-full rounded-2xl border border-[#e1d8ca] bg-white p-3 text-left">
@@ -266,7 +266,7 @@ export default function DashboardApp({
                           ? "bg-gray-300 text-gray-400 cursor-not-allowed"
                           : "bg-[var(--green)] hover:-translate-y-0.5 hover:bg-[var(--green-dark)]"
                       }`}
-                      pendingText="Uploading"
+                      pendingText="Mengoptimalkan & mengupload"
                       disabled={!!localError || !selectedFile || isLimitReached}
                     >
                       <Upload size={17} />

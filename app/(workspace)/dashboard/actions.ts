@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getDocumentSlug } from "@/lib/document-slug";
 import { formatBytes, logoUploadConfig, uploadConfig } from "@/lib/config";
 import { deleteR2Object, uploadR2Object } from "@/lib/r2-storage";
+import { optimizePdfForUpload } from "@/lib/pdf-optimizer";
 import { slugify, uniqueSlug } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
 
@@ -109,15 +110,15 @@ export async function uploadMenu(formData: FormData) {
   }
 
   if (file.size === 0) {
-    dashboardError("The uploaded PDF file is empty or corrupted.");
+    dashboardError("File PDF kosong atau rusak.");
   }
 
   if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-    dashboardError("Only PDF files are accepted.");
+    dashboardError("Hanya file PDF yang bisa diupload.");
   }
 
   if (file.size > uploadConfig.maxPdfBytes) {
-    dashboardError(`PDF is too large. Limit is ${formatBytes(uploadConfig.maxPdfBytes)}.`);
+    dashboardError(`PDF terlalu besar. Batas maksimal ${formatBytes(uploadConfig.maxPdfBytes)}.`);
   }
 
   const { data: existingRestaurant, error: restaurantError } = await supabase
@@ -186,7 +187,7 @@ export async function uploadMenu(formData: FormData) {
 
   if (count !== null && count >= uploadLimit) {
     dashboardError(
-      `Upload limit reached. Your active plan (${plan}) allows a maximum of ${uploadLimit} PDF document${uploadLimit === 1 ? "" : "s"}.`
+      `Batas upload tercapai. Paket aktif kamu (${plan}) hanya mendukung ${uploadLimit} dokumen PDF.`
     );
   }
 
@@ -197,12 +198,13 @@ export async function uploadMenu(formData: FormData) {
   );
   const cleanFileName = slugify(file.name.replace(/\.pdf$/i, "")) || documentSlug;
   const storagePath = `${user.id}/${restaurant.slug}/${documentSlug}-${Date.now()}-${cleanFileName}.pdf`;
+  const optimizedPdf = await optimizePdfForUpload(file);
 
   let publicUrl: string;
 
   try {
     publicUrl = await uploadR2Object({
-      body: file,
+      body: optimizedPdf.body,
       contentType: "application/pdf",
       key: storagePath,
     });
@@ -254,7 +256,10 @@ export async function uploadMenu(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath(`/menu/${restaurant.slug}`);
   revalidatePath(`/menu/${restaurant.slug}/${publicDocumentSlug}`);
-  redirect(`/dashboard?message=${encodeURIComponent("Document uploaded and published.")}`);
+  const uploadMessage = optimizedPdf.optimized
+    ? `PDF dioptimalkan dari ${formatBytes(optimizedPdf.originalBytes)} ke ${formatBytes(optimizedPdf.outputBytes)}.`
+    : "PDF berhasil diupload.";
+  redirect(`/dashboard?message=${encodeURIComponent(uploadMessage)}`);
 }
 
 export async function updateBusinessSettings(formData: FormData) {
