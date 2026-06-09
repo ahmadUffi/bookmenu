@@ -154,79 +154,89 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
           }}
         >
           {numPages > 0 ? (
-            <HTMLFlipBook
-              ref={bookRef}
-              width={bookSize.width}
-              height={bookSize.height}
-              size="fixed"
-              minWidth={260}
-              maxWidth={980}
-              minHeight={320}
-              maxHeight={1400}
-              showCover
-              mobileScrollSupport
-              className="mx-auto"
-              style={{}}
-              startPage={0}
-              drawShadow
-              flippingTime={650}
-              usePortrait={isMobileBook}
-              startZIndex={0}
-              autoSize
-              maxShadowOpacity={0.18}
-              clickEventForward
-              useMouseEvents
-              swipeDistance={30}
-              showPageCorners
-              disableFlipByClick={false}
-              onFlip={(event) => {
-                setPage(event.data);
-              }}
-              onChangeState={(event) => {
-                if (event.data === "flipping") {
-                  playFlipSound();
-                }
+            <div
+              className="transition-transform duration-500 ease-out"
+              style={{
+                transform:
+                  !isMobileBook && page <= 0
+                    ? `translateX(-${bookSize.width / 2}px)`
+                    : "translateX(0)",
               }}
             >
-              {pages.map((pageNumber) => (
-                <div
-                  key={pageNumber}
-                  className="overflow-hidden rounded-xl bg-white shadow-xl"
-                >
-                  {renderedPages.has(pageNumber) ? (
-                    <Page
-                      pageNumber={pageNumber}
-                      width={bookSize.width}
-                      devicePixelRatio={renderPixelRatio}
-                      renderAnnotationLayer={false}
-                      renderTextLayer={false}
-                      loading={
-                        <div
-                          className="flex items-center justify-center bg-[#f8fafc]"
-                          style={{
-                            width: bookSize.width,
-                            height: bookSize.height,
-                          }}
-                        >
-                          <Loader2
-                            className="animate-spin text-[var(--green)]"
-                            size={22}
-                          />
-                        </div>
-                      }
-                    />
-                  ) : (
-                    <div
-                      className="bg-[#f8fafc]"
-                      style={{
-                        width: bookSize.width,
-                        height: bookSize.height,
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
-            </HTMLFlipBook>
+              <HTMLFlipBook
+                ref={bookRef}
+                width={bookSize.width}
+                height={bookSize.height}
+                size="fixed"
+                minWidth={260}
+                maxWidth={980}
+                minHeight={320}
+                maxHeight={1400}
+                showCover
+                mobileScrollSupport
+                className="mx-auto"
+                style={{}}
+                startPage={0}
+                drawShadow
+                flippingTime={650}
+                usePortrait={isMobileBook}
+                startZIndex={0}
+                autoSize
+                maxShadowOpacity={0.18}
+                clickEventForward
+                useMouseEvents
+                swipeDistance={30}
+                showPageCorners
+                disableFlipByClick={false}
+                onFlip={(event) => {
+                  setPage(event.data);
+                }}
+                onChangeState={(event) => {
+                  if (event.data === "flipping") {
+                    playFlipSound();
+                  }
+                }}
+              >
+                {pages.map((pageNumber) => (
+                  <div
+                    key={pageNumber}
+                    className="overflow-hidden rounded-xl bg-white shadow-xl"
+                  >
+                    {renderedPages.has(pageNumber) ? (
+                      <Page
+                        pageNumber={pageNumber}
+                        width={bookSize.width}
+                        devicePixelRatio={renderPixelRatio}
+                        renderAnnotationLayer={false}
+                        renderTextLayer={false}
+                        loading={
+                          <div
+                            className="flex items-center justify-center bg-[#f8fafc]"
+                            style={{
+                              width: bookSize.width,
+                              height: bookSize.height,
+                            }}
+                          >
+                            <Loader2
+                              className="animate-spin text-[var(--green)]"
+                              size={22}
+                            />
+                          </div>
+                        }
+                      />
+                    ) : (
+                      <div
+                        className="bg-[#f8fafc]"
+                        style={{
+                          width: bookSize.width,
+                          height: bookSize.height,
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </HTMLFlipBook>
+            </div>
           ) : null}
         </Document>
       </div>
