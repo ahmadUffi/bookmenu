@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LandingSimulation from "@/components/landing/landing-simulation";
+import PdfPreviewCards from "@/components/landing/pdf-preview-cards";
 import {
   ArrowRight,
   BarChart3,
@@ -23,17 +24,20 @@ import {
 const steps = [
   {
     title: "Upload PDF",
-    description: "Masukkan menu, katalog, brosur, proposal, atau profil bisnis.",
+    description:
+      "Masukkan menu, katalog, brosur, proposal, atau profil bisnis.",
     icon: FileUp,
   },
   {
     title: "Jadi flipbook",
-    description: "PDF tampil sebagai halaman digital yang enak dibuka di browser.",
+    description:
+      "PDF tampil sebagai halaman digital yang enak dibuka di browser.",
     icon: BookOpen,
   },
   {
     title: "Bagikan QR",
-    description: "Tempel QR di meja, kasir, booth, katalog cetak, atau media sosial.",
+    description:
+      "Tempel QR di meja, kasir, booth, katalog cetak, atau media sosial.",
     icon: QrCode,
   },
 ];
@@ -89,7 +93,13 @@ const features = [
   },
 ];
 
-const useCases = ["Menu restoran", "Katalog produk", "Brosur promosi", "Proposal", "Profil usaha"];
+const useCases = [
+  "Menu restoran",
+  "Katalog produk",
+  "Brosur promosi",
+  "Proposal",
+  "Profil usaha",
+];
 
 const samplePages = [
   {
@@ -221,7 +231,9 @@ export default function Home() {
                 <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(14,165,233,0.42),rgba(8,47,73,0.95)),repeating-linear-gradient(90deg,rgba(255,255,255,0.08)_0,rgba(255,255,255,0.08)_1px,transparent_1px,transparent_48px)]" />
                 <div className="absolute left-4 right-4 top-4 flex items-center justify-between rounded-2xl border border-white/20 bg-white/90 p-3 text-sm shadow-xl backdrop-blur">
                   <div>
-                    <p className="font-semibold text-[#082f49]">Menu Sore Kopi</p>
+                    <p className="font-semibold text-[#082f49]">
+                      Menu Sore Kopi
+                    </p>
                     <p className="text-slate-500">Preview flip PDF</p>
                   </div>
                   <span className="rounded-full bg-orange-100 px-3 py-1 font-semibold text-orange-700">
@@ -244,7 +256,9 @@ export default function Home() {
                             index === 0 ? "border-r" : ""
                           } ${page.panel}`}
                         >
-                          <div className={`h-2 w-16 rounded-full ${page.accent}`} />
+                          <div
+                            className={`h-2 w-16 rounded-full ${page.accent}`}
+                          />
                           <p className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                             Halaman {index + 1}
                           </p>
@@ -294,7 +308,9 @@ export default function Home() {
                           key={page.title}
                           className="aspect-[3/4] w-16 rounded-xl border border-sky-100 bg-white p-2"
                         >
-                          <div className={`h-2 w-8 rounded-full ${page.accent}`} />
+                          <div
+                            className={`h-2 w-8 rounded-full ${page.accent}`}
+                          />
                           <p className="mt-3 text-[10px] font-semibold text-slate-500">
                             0{index + 1}
                           </p>
@@ -359,53 +375,21 @@ export default function Home() {
             </p>
             <div className="mt-7 rounded-3xl border border-sky-100 bg-white/70 p-4 text-sm leading-6 text-slate-600">
               File yang dibaca:{" "}
-              <span className="font-semibold text-[#0c4a6e]">/sample-menu.pdf</span>,{" "}
-              <span className="font-semibold text-[#0c4a6e]">/sample-catalog.pdf</span>, dan{" "}
-              <span className="font-semibold text-[#0c4a6e]">/sample-brochure.pdf</span>.
+              <span className="font-semibold text-[#0c4a6e]">
+                /sample-menu.pdf
+              </span>
+              ,{" "}
+              <span className="font-semibold text-[#0c4a6e]">
+                /sample-catalog.pdf
+              </span>
+              , dan{" "}
+              <span className="font-semibold text-[#0c4a6e]">
+                /sample-brochure.pdf
+              </span>
+              .
             </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {samplePages.map((page, index) => (
-              <article
-                key={page.title}
-                className={`overflow-hidden rounded-3xl border border-sky-100 shadow-sm ${page.panel}`}
-              >
-                <div className="p-5">
-                  <div className={`h-2 w-14 rounded-full ${page.accent}`} />
-                  <p className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Preview 0{index + 1}
-                  </p>
-                  <h3 className="mt-3 text-xl font-semibold text-[#082f49]">
-                    {page.title}
-                  </h3>
-                  <p className="mt-2 min-h-12 text-sm leading-6 text-slate-600">
-                    {page.subtitle}
-                  </p>
-                </div>
-                <div className="mx-5 mb-5 overflow-hidden rounded-2xl border border-white/70 bg-white">
-                  <object
-                    data={`${page.file}#toolbar=0&navpanes=0&scrollbar=0`}
-                    type="application/pdf"
-                    className="h-[320px] w-full"
-                    aria-label={`Preview PDF ${page.title}`}
-                  >
-                    <div className="flex h-[320px] flex-col items-center justify-center bg-white p-5 text-center">
-                      <FileText className="text-[#0ea5e9]" size={30} />
-                      <p className="mt-3 text-sm font-semibold text-[#082f49]">
-                        Preview PDF belum tersedia.
-                      </p>
-                      <a
-                        href={page.file}
-                        className="mt-4 rounded-xl bg-[#082f49] px-4 py-2 text-xs font-semibold text-white"
-                      >
-                        Buka PDF
-                      </a>
-                    </div>
-                  </object>
-                </div>
-              </article>
-            ))}
-          </div>
+          <PdfPreviewCards samples={samplePages} />
         </div>
       </section>
 
@@ -431,7 +415,9 @@ export default function Home() {
                 <h3 className="mt-7 text-xl font-semibold text-[#082f49]">
                   {feature.title}
                 </h3>
-                <p className="mt-3 leading-7 text-slate-600">{feature.description}</p>
+                <p className="mt-3 leading-7 text-slate-600">
+                  {feature.description}
+                </p>
               </article>
             ))}
           </div>
@@ -463,8 +449,12 @@ export default function Home() {
                     <step.icon size={22} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-400">0{index + 1}</p>
-                    <h3 className="mt-1 font-semibold text-[#082f49]">{step.title}</h3>
+                    <p className="text-sm font-semibold text-slate-400">
+                      0{index + 1}
+                    </p>
+                    <h3 className="mt-1 font-semibold text-[#082f49]">
+                      {step.title}
+                    </h3>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
                       {step.description}
                     </p>
@@ -487,7 +477,8 @@ export default function Home() {
               Mulai gratis, upgrade saat dokumen bertambah.
             </h2>
             <p className="mt-4 text-white/72">
-              Pilih paket sesuai kebutuhan QR menu, katalog, dan dokumen publik bisnis kamu.
+              Pilih paket sesuai kebutuhan QR menu, katalog, dan dokumen publik
+              bisnis kamu.
             </p>
           </div>
 
@@ -497,7 +488,12 @@ export default function Home() {
                 name: "Free",
                 price: "Rp0",
                 period: "/ bulan",
-                items: ["1x upload PDF", "QR menu", "1000x scan QR", "Owner dashboard"],
+                items: [
+                  "1x upload PDF",
+                  "QR menu",
+                  "1000x scan QR",
+                  "Owner dashboard",
+                ],
                 featured: false,
                 cta: "Mulai gratis",
               },
@@ -532,7 +528,9 @@ export default function Home() {
                   </div>
                 ) : null}
                 <div>
-                  <p className="text-sm font-semibold text-white/70">{plan.name}</p>
+                  <p className="text-sm font-semibold text-white/70">
+                    {plan.name}
+                  </p>
                   <div className="mt-4 flex items-baseline">
                     <span className="text-3xl font-semibold tracking-tight">
                       {plan.price}
@@ -577,7 +575,9 @@ export default function Home() {
             <BookOpen size={18} />
             FlipDulu
           </Link>
-          <p>PDF jadi flipbook digital untuk menu, katalog, brosur, dan proposal.</p>
+          <p>
+            PDF jadi flipbook digital untuk menu, katalog, brosur, dan proposal.
+          </p>
         </div>
       </footer>
     </main>
