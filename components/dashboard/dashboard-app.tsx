@@ -333,69 +333,101 @@ export default function DashboardApp({
                         </p>
                       </div>
                     ) : (
-                      menus.map((menu) => (
-                        <article
-                          key={menu.id}
-                          className="grid gap-4 p-5 transition hover:bg-[#fbf7ef] lg:grid-cols-[1fr_auto]"
-                        >
-                          <div className="flex gap-4">
-                            <div className="flex h-16 w-14 shrink-0 items-center justify-center rounded-2xl border border-[#e5dccf] bg-[#f7f1e7] text-[var(--green)]">
-                              <FileText size={24} />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="font-semibold">{menu.title}</h3>
-                                <span className="inline-flex items-center gap-1 rounded-full bg-[#eef6ed] px-2.5 py-1 text-xs font-semibold text-[var(--green-dark)]">
-                                  <CheckCircle2 size={13} />
-                                  Active
-                                </span>
-                              </div>
-                              <p className="mt-1 text-sm text-[#666a61]">
-                                {menu.restaurantName} - /menu/{menu.slug}/{menu.documentSlug}
-                              </p>
-                              <a
-                                href={`/menu/${menu.slug}/${menu.documentSlug}`}
-                                className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--green)] transition hover:text-[var(--green-dark)]"
-                              >
-                                <LinkIcon size={15} />
-                                Open public document
-                              </a>
-                            </div>
-                          </div>
+                      menus.map((menu, index) => {
+                        const isWithinLimit = index < uploadLimit;
+                        const isActive = menu.isActive && isWithinLimit;
 
-                          <div className="flex flex-wrap items-center gap-2">
-                            <button
-                              onClick={() => copyUrl(menu.slug, menu.documentSlug)}
-                              className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#d9d0c2] bg-white px-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#fbf7ef]"
-                            >
-                              <Copy size={16} />
-                              Copy
-                            </button>
-                            <button
-                              onClick={() => downloadQr(menu)}
-                              className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#d9d0c2] bg-white px-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#fbf7ef]"
-                            >
-                              <Download size={16} />
-                              QR
-                            </button>
-                            <form action={deleteMenuAction}>
-                              <input name="menuId" type="hidden" value={menu.id} />
-                              <input
-                                name="storageUrl"
-                                type="hidden"
-                                value={menu.pdfUrl}
-                              />
-                              <PendingSubmitButton
-                                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 text-sm font-semibold text-red-700 transition hover:-translate-y-0.5 hover:bg-red-50"
-                                pendingText="Deleting"
+                        return (
+                          <article
+                            key={menu.id}
+                            className={`grid gap-4 p-5 transition hover:bg-[#fbf7ef] lg:grid-cols-[1fr_auto] ${
+                              !isWithinLimit ? "opacity-75" : ""
+                            }`}
+                          >
+                            <div className="flex gap-4">
+                              <div className={`flex h-16 w-14 shrink-0 items-center justify-center rounded-2xl border ${
+                                !isWithinLimit
+                                  ? "border-red-100 bg-red-50/30 text-red-400"
+                                  : "border-[#e5dccf] bg-[#f7f1e7] text-[var(--green)]"
+                              }`}>
+                                <FileText size={24} />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h3 className="font-semibold">{menu.title}</h3>
+                                  {isActive ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#eef6ed] px-2.5 py-1 text-xs font-semibold text-[var(--green-dark)]">
+                                      <CheckCircle2 size={13} />
+                                      Active
+                                    </span>
+                                  ) : !isWithinLimit ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-700">
+                                      <AlertCircle size={13} />
+                                      Inactive (Plan Limit)
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-500">
+                                      Inactive
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="mt-1 text-sm text-[#666a61]">
+                                  {menu.restaurantName} - /menu/{menu.slug}/{menu.documentSlug}
+                                </p>
+                                {isWithinLimit ? (
+                                  <a
+                                    href={`/menu/${menu.slug}/${menu.documentSlug}`}
+                                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--green)] transition hover:text-[var(--green-dark)]"
+                                  >
+                                    <LinkIcon size={15} />
+                                    Open public document
+                                  </a>
+                                ) : (
+                                  <span
+                                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-gray-400 cursor-not-allowed"
+                                    title="This document is inactive because your plan limit is exceeded."
+                                  >
+                                    <LinkIcon size={15} />
+                                    Open public document (Inactive)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button
+                                onClick={() => copyUrl(menu.slug, menu.documentSlug)}
+                                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#d9d0c2] bg-white px-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#fbf7ef]"
                               >
-                                <Trash2 size={16} />
-                                Delete
-                              </PendingSubmitButton>
-                            </form>
-                          </div>
-                        </article>
-                      ))
+                                <Copy size={16} />
+                                Copy
+                              </button>
+                              <button
+                                onClick={() => downloadQr(menu)}
+                                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#d9d0c2] bg-white px-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-[#fbf7ef]"
+                              >
+                                <Download size={16} />
+                                QR
+                              </button>
+                              <form action={deleteMenuAction}>
+                                <input name="menuId" type="hidden" value={menu.id} />
+                                <input
+                                  name="storageUrl"
+                                  type="hidden"
+                                  value={menu.pdfUrl}
+                                />
+                                <PendingSubmitButton
+                                  className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 text-sm font-semibold text-red-700 transition hover:-translate-y-0.5 hover:bg-red-50"
+                                  pendingText="Deleting"
+                                >
+                                  <Trash2 size={16} />
+                                  Delete
+                                </PendingSubmitButton>
+                              </form>
+                            </div>
+                          </article>
+                        );
+                      })
                     )}
                   </div>
                 </section>
