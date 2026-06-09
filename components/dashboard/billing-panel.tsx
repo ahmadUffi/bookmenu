@@ -70,7 +70,7 @@ export default function BillingPanel({
       name: "Monthly Plan",
       price: "Rp9.000,00",
       period: "month",
-      pdfLimit: 10,
+      pdfLimit: 5,
       scanLimit: "Unlimited",
       scansUsed: 1240,
     },
@@ -78,7 +78,7 @@ export default function BillingPanel({
       name: "Yearly Plan",
       price: "Rp99.000,00",
       period: "year",
-      pdfLimit: 10,
+      pdfLimit: 5,
       scanLimit: "Unlimited",
       scansUsed: 1240,
     },
@@ -150,7 +150,7 @@ export default function BillingPanel({
   };
 
   return (
-    <main className="h-screen overflow-hidden bg-[var(--cream)] text-[var(--charcoal)]">
+    <>
       {/* Load Midtrans Snap client libraries */}
       <Script
         src={midtransSnapUrl}
@@ -158,98 +158,8 @@ export default function BillingPanel({
         strategy="lazyOnload"
       />
 
-      <div className="grid h-screen lg:grid-cols-[280px_1fr]">
-        {/* Navigation Sidebar */}
-        <aside className="hidden h-screen overflow-hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 backdrop-blur lg:block">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--charcoal)] text-white">
-              <Sparkles size={19} />
-            </div>
-            <div>
-              <p className="font-semibold tracking-tight">DocLume</p>
-              <p className="text-xs font-medium text-[#73766e]">Document OS</p>
-            </div>
-          </div>
-
-          <nav className="mt-9 space-y-1">
-            <Link
-              href="/dashboard"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
-            >
-              <Home size={18} />
-              Overview
-            </Link>
-            <Link
-              href="/qr"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
-            >
-              <QrCode size={18} />
-              QR codes
-            </Link>
-            <Link
-              href="/dashboard/settings"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
-            >
-              <Sparkles size={18} />
-              Settings
-            </Link>
-            <Link
-              href="/dashboard/billing"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl bg-[var(--charcoal)] px-3 text-left text-sm font-semibold text-white shadow-[0_14px_30px_rgba(31,33,29,0.16)]"
-            >
-              <CreditCard size={18} />
-              Billing
-            </Link>
-            <Link
-              href="/"
-              className="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold text-[#666a61] transition hover:bg-[#f3ede3] hover:text-[var(--charcoal)]"
-            >
-              <FileText size={18} />
-              Landing page
-            </Link>
-          </nav>
-
-          <div className="mt-8 rounded-3xl border border-[#e4dbce] bg-[#f8f3eb] p-4">
-            <p className="text-sm font-semibold">Billing Period</p>
-            <div className="mt-2 text-xs leading-5 text-[#666a61]">
-              {activePlan === "free" ? (
-                "You are currently on the Free Tier. Upgrades are active immediately."
-              ) : (
-                <p>
-                  Renewal date:<br />
-                  <span className="font-semibold text-[var(--charcoal)]">{endedAt}</span><br />
-                  via Midtrans gateway.
-                </p>
-              )}
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content Area */}
-        <section className="h-screen min-h-0 overflow-y-auto">
-          {/* Header */}
-          <header className="sticky top-0 z-30 border-b border-[#e4dbce] bg-[#f7f3eb]/88 px-4 py-4 backdrop-blur-xl md:px-8">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-[var(--green)]">
-                  Billing Management
-                </p>
-                <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-                  {initialBusinessName}
-                </h1>
-              </div>
-              <a
-                href="/auth/logout"
-                className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#d9d0c2] bg-white/70 px-4 text-sm font-semibold text-[#4d5149] transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                <LogOut size={16} />
-                Logout
-              </a>
-            </div>
-          </header>
-
-          {/* Sub content page */}
-          <div className="px-4 py-6 md:px-8 md:py-8">
+      {/* Sub content page */}
+      <div className="px-4 py-6 md:px-8 md:py-8">
             {notice ? (
               <div className="mb-6 flex items-center gap-2.5 rounded-2xl border border-[#cfe1cf] bg-[#eef6ed] px-4 py-3 text-sm font-medium text-[var(--green-dark)] shadow-sm transition-all duration-300">
                 <CheckCircle2 size={18} className="shrink-0 text-[var(--green)]" />
@@ -258,168 +168,166 @@ export default function BillingPanel({
             ) : null}
 
             {/* Layout divided into Main Section & Usage Sidebar */}
-            <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
               {/* Left Column: Plans & History */}
-              <div className="space-y-6">
+              <div className="space-y-6 min-w-0">
                 {/* Pricing List */}
-                <div className="rounded-[1.75rem] border border-[#e4dbce] bg-white p-6 shadow-[var(--shadow-card)]">
-                  <div className="mb-6">
-                    <h2 className="text-xl font-semibold tracking-tight">Select Subscription Plan</h2>
-                    <p className="text-sm text-[#666a61]">
-                      Choose the plan that suits your publishing frequency and scan volumes.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-3">
-                    {/* Free Card */}
-                    <div
-                      className={`relative flex flex-col justify-between rounded-2xl border p-5 transition-all ${
-                        activePlan === "free"
-                          ? "border-[var(--green)] bg-[var(--green-soft)]/20 shadow-sm"
-                          : "border-[#e4dbce] bg-[#fffdf8] hover:border-[#cbd5e1]"
-                      }`}
-                    >
-                      {activePlan === "free" && (
-                        <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white">
-                          Active Plan
-                        </span>
-                      )}
-                      <div>
-                        <h3 className="font-semibold text-[var(--charcoal)]">Free</h3>
-                        <div className="mt-3 flex items-baseline">
-                          <span className="text-2xl font-bold tracking-tight">Rp0</span>
-                          <span className="ml-1 text-xs text-[#666a61]">/ month</span>
-                        </div>
-                        <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
-                          <li className="flex items-center gap-1.5">
-                            <Check size={14} className="text-[var(--green)] shrink-0" />
-                            <span>1x PDF upload</span>
-                          </li>
-                          <li className="flex items-center gap-1.5">
-                            <Check size={14} className="text-[var(--green)] shrink-0" />
-                            <span>QR Menu</span>
-                          </li>
-                          <li className="flex items-center gap-1.5">
-                            <Check size={14} className="text-[var(--green)] shrink-0" />
-                            <span>1000x QR Scan</span>
-                          </li>
-                          <li className="flex items-center gap-1.5">
-                            <Check size={14} className="text-[var(--green)] shrink-0" />
-                            <span>Owner dashboard</span>
-                          </li>
-                        </ul>
-                      </div>
-                      <button
-                        onClick={() => handlePlanCheckout("free")}
-                        disabled={activePlan === "free" || loading}
-                        className={`mt-6 w-full rounded-xl py-2.5 text-xs font-semibold transition ${
-                          activePlan === "free"
-                            ? "bg-[var(--green)] text-white cursor-default"
-                            : "border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef] disabled:opacity-50"
-                        }`}
-                      >
-                        {activePlan === "free" ? "Current Plan" : "Downgrade"}
-                      </button>
+                {activePlan === "free" ? (
+                  <div className="rounded-[1.75rem] border border-[#e4dbce] bg-white p-6 shadow-[var(--shadow-card)]">
+                    <div className="mb-6">
+                      <h2 className="text-xl font-semibold tracking-tight">Select Subscription Plan</h2>
+                      <p className="text-sm text-[#666a61]">
+                        Choose the plan that suits your publishing frequency and scan volumes.
+                      </p>
                     </div>
 
-                    {/* Monthly Card */}
-                    <div
-                      className={`relative flex flex-col justify-between rounded-2xl border p-5 transition-all ${
-                        activePlan === "monthly"
-                          ? "border-[var(--green)] bg-[var(--green-soft)]/20 shadow-sm"
-                          : "border-[#e4dbce] bg-[#fffdf8] hover:border-[#cbd5e1]"
-                      }`}
-                    >
-                      {activePlan === "monthly" && (
+                    <div className="grid gap-4 md:grid-cols-3">
+                      {/* Free Card */}
+                      <div
+                        className="relative flex flex-col justify-between rounded-2xl border p-5 border-[var(--green)] bg-[var(--green-soft)]/20 shadow-sm"
+                      >
                         <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white">
                           Active Plan
                         </span>
-                      )}
-                      <div>
-                        <h3 className="font-semibold text-[var(--charcoal)]">Monthly</h3>
-                        <div className="mt-3 flex items-baseline">
-                          <span className="text-2xl font-bold tracking-tight">Rp9.000,00</span>
-                          <span className="ml-1 text-xs text-[#666a61]">/ month</span>
+                        <div>
+                          <h3 className="font-semibold text-[var(--charcoal)]">Free</h3>
+                          <div className="mt-3 flex items-baseline">
+                            <span className="text-2xl font-bold tracking-tight">Rp0</span>
+                            <span className="ml-1 text-xs text-[#666a61]">/ month</span>
+                          </div>
+                          <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
+                            <li className="flex items-center gap-1.5">
+                              <Check size={14} className="text-[var(--green)] shrink-0" />
+                              <span>1x PDF upload</span>
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                              <Check size={14} className="text-[var(--green)] shrink-0" />
+                              <span>QR Menu</span>
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                              <Check size={14} className="text-[var(--green)] shrink-0" />
+                              <span>1000x QR Scan</span>
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                              <Check size={14} className="text-[var(--green)] shrink-0" />
+                              <span>Owner dashboard</span>
+                            </li>
+                          </ul>
                         </div>
-                        <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
-                          <li className="flex items-center gap-1.5">
-                            <Check size={14} className="text-[var(--green)] shrink-0" />
-                            <span>10x PDF upload</span>
-                          </li>
-                          <li className="flex items-center gap-1.5">
-                            <Check size={14} className="text-[var(--green)] shrink-0" />
-                            <span>Unlimited QR Scan</span>
-                          </li>
-                          <li className="flex items-center gap-1.5">
-                            <Check size={14} className="text-[var(--green)] shrink-0" />
-                            <span>Custom QR</span>
-                          </li>
-                        </ul>
+                        <button
+                          onClick={() => handlePlanCheckout("free")}
+                          disabled={true}
+                          className="mt-6 w-full rounded-xl py-2.5 text-xs font-semibold bg-[var(--green)] text-white cursor-default"
+                        >
+                          Current Plan
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handlePlanCheckout("monthly")}
-                        disabled={activePlan === "monthly" || loading}
-                        className={`mt-6 w-full rounded-xl py-2.5 text-xs font-semibold transition ${
-                          activePlan === "monthly"
-                            ? "bg-[var(--green)] text-white cursor-default"
-                            : "border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef] disabled:opacity-50"
-                        }`}
-                      >
-                        {activePlan === "monthly" ? "Current Plan" : loading ? "Loading..." : "Choose Monthly"}
-                      </button>
-                    </div>
 
-                    {/* Yearly Card - Best Value */}
-                    <div
-                      className={`relative flex flex-col justify-between rounded-2xl border-2 p-5 transition-all ${
-                        activePlan === "yearly"
-                          ? "border-[var(--green)] bg-[var(--green-soft)]/20 shadow-sm"
-                          : "border-[#ded5c7] bg-[#fffdf8] hover:border-[#cbd5e1]"
-                      }`}
-                    >
-                      <span className="absolute -top-2.5 right-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
-                        Best Value
-                      </span>
-                      {activePlan === "yearly" && (
-                        <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white">
-                          Active Plan
-                        </span>
-                      )}
-                      <div>
-                        <h3 className="font-semibold text-[var(--charcoal)]">Yearly</h3>
-                        <div className="mt-3 flex items-baseline">
-                          <span className="text-2xl font-bold tracking-tight">Rp99.000,00</span>
-                          <span className="ml-1 text-xs text-[#666a61]">/ year</span>
-                        </div>
-                        <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
-                          <li className="flex items-center gap-1.5">
-                            <Check size={14} className="text-[var(--green)] shrink-0" />
-                            <span>10x PDF upload</span>
-                          </li>
-                          <li className="flex items-center gap-1.5">
-                            <Check size={14} className="text-[var(--green)] shrink-0" />
-                            <span>Unlimited QR Scan</span>
-                          </li>
-                          <li className="flex items-center gap-1.5">
-                            <Check size={14} className="text-[var(--green)] shrink-0" />
-                            <span>Custom QR</span>
-                          </li>
-                        </ul>
-                      </div>
-                      <button
-                        onClick={() => handlePlanCheckout("yearly")}
-                        disabled={activePlan === "yearly" || loading}
-                        className={`mt-6 w-full rounded-xl py-2.5 text-xs font-semibold transition ${
-                          activePlan === "yearly"
-                            ? "bg-[var(--green)] text-white cursor-default"
-                            : "border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef] disabled:opacity-50"
-                        }`}
+                      {/* Monthly Card */}
+                      <div
+                        className="relative flex flex-col justify-between rounded-2xl border p-5 border-[#e4dbce] bg-[#fffdf8] hover:border-[#cbd5e1]"
                       >
-                        {activePlan === "yearly" ? "Current Plan" : loading ? "Loading..." : "Choose Yearly"}
-                      </button>
+                        <div>
+                          <h3 className="font-semibold text-[var(--charcoal)]">Monthly</h3>
+                          <div className="mt-3 flex items-baseline">
+                            <span className="text-2xl font-bold tracking-tight">Rp9.000,00</span>
+                            <span className="ml-1 text-xs text-[#666a61]">/ month</span>
+                          </div>
+                          <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
+                            <li className="flex items-center gap-1.5">
+                              <Check size={14} className="text-[var(--green)] shrink-0" />
+                              <span>5x PDF upload</span>
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                              <Check size={14} className="text-[var(--green)] shrink-0" />
+                              <span>Unlimited QR Scan</span>
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                              <Check size={14} className="text-[var(--green)] shrink-0" />
+                              <span>Custom QR</span>
+                            </li>
+                          </ul>
+                        </div>
+                        <button
+                          onClick={() => handlePlanCheckout("monthly")}
+                          disabled={loading}
+                          className="mt-6 w-full rounded-xl py-2.5 text-xs font-semibold border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef] disabled:opacity-50"
+                        >
+                          {loading ? "Loading..." : "Choose Monthly"}
+                        </button>
+                      </div>
+
+                      {/* Yearly Card - Best Value */}
+                      <div
+                        className="relative flex flex-col justify-between rounded-2xl border-2 p-5 border-[#ded5c7] bg-[#fffdf8] hover:border-[#cbd5e1]"
+                      >
+                        <span className="absolute -top-2.5 right-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
+                          Best Value
+                        </span>
+                        <div>
+                          <h3 className="font-semibold text-[var(--charcoal)]">Yearly</h3>
+                          <div className="mt-3 flex items-baseline">
+                            <span className="text-2xl font-bold tracking-tight">Rp99.000,00</span>
+                            <span className="ml-1 text-xs text-[#666a61]">/ year</span>
+                          </div>
+                          <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
+                            <li className="flex items-center gap-1.5">
+                              <Check size={14} className="text-[var(--green)] shrink-0" />
+                              <span>5x PDF upload</span>
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                              <Check size={14} className="text-[var(--green)] shrink-0" />
+                              <span>Unlimited QR Scan</span>
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                              <Check size={14} className="text-[var(--green)] shrink-0" />
+                              <span>Custom QR</span>
+                            </li>
+                          </ul>
+                        </div>
+                        <button
+                          onClick={() => handlePlanCheckout("yearly")}
+                          disabled={loading}
+                          className="mt-6 w-full rounded-xl py-2.5 text-xs font-semibold border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef] disabled:opacity-50"
+                        >
+                          {loading ? "Loading..." : "Choose Yearly"}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="rounded-[1.75rem] border border-[#cfe1cf] bg-white p-6 shadow-[var(--shadow-card)]">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--green-soft)] text-[var(--green)]">
+                        <Sparkles size={20} />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-semibold tracking-tight text-[var(--green-dark)]">
+                          Your Active Subscription Plan
+                        </h2>
+                        <p className="text-sm text-[#555950] mt-1.5">
+                          You are currently subscribed to the <b>{activePlan === "monthly" ? "Monthly Plan" : "Yearly Plan"}</b>. Thank you for supporting us!
+                        </p>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <div className="inline-flex items-center gap-2 rounded-xl bg-[#eef6ed] border border-[#cfe1cf] px-4 py-2 text-xs font-semibold text-[var(--green-dark)]">
+                            <span>Status: Active</span>
+                            <span className="h-1.5 w-1.5 rounded-full bg-[var(--green)]"></span>
+                          </div>
+                          {endedAt && (
+                            <div className="inline-flex items-center gap-2 rounded-xl bg-[#fbf7ef] border border-[#d9d0c2] px-4 py-2 text-xs font-semibold text-[#555950]">
+                              <span>Expired Date: {endedAt}</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-[#777a72] mt-4 leading-relaxed">
+                          Self-service upgrades or downgrades are currently disabled. Please contact support if you need to make changes to your plan.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+
 
                 {/* History Table */}
                 <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] shadow-[var(--shadow-card)] overflow-hidden">
@@ -441,47 +349,92 @@ export default function BillingPanel({
                       </p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto bg-white">
-                      <table className="w-full border-collapse text-left text-sm">
-                        <thead>
-                          <tr className="border-b border-[#e4dbce] bg-[#fbf7ef]/50 text-xs font-semibold uppercase tracking-wider text-[#777a72]">
-                            <th className="px-6 py-4">Billing Date</th>
-                            <th className="px-6 py-4">Invoice No</th>
-                            <th className="px-6 py-4">Plan Name</th>
-                            <th className="px-6 py-4">Paid Amount</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4 text-right">Invoice</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#ece4d8] text-[#4d5149]">
-                          {transactions.map((tx) => (
-                            <tr key={tx.id} className="transition hover:bg-[#fbf7ef]/50">
-                              <td className="whitespace-nowrap px-6 py-4 font-medium">{tx.date}</td>
-                              <td className="whitespace-nowrap px-6 py-4 text-[#777a72]">{tx.invoiceNo}</td>
-                              <td className="whitespace-nowrap px-6 py-4 font-medium">{tx.planName}</td>
-                              <td className="whitespace-nowrap px-6 py-4 font-semibold text-[var(--charcoal)]">{tx.amount}</td>
-                              <td className="whitespace-nowrap px-6 py-4">
-                                <span className="inline-flex items-center gap-1 rounded-full border border-[#cfe1cf] bg-[#eef6ed] px-2.5 py-0.5 text-xs font-medium text-[var(--green-dark)]">
-                                  <span className={`h-1.5 w-1.5 rounded-full ${
-                                    tx.status === "Paid" ? "bg-[var(--green)]" : "bg-yellow-500"
-                                  }`}></span>
-                                  {tx.status}
-                                </span>
-                              </td>
-                              <td className="whitespace-nowrap px-6 py-4 text-right">
-                                <button
-                                  onClick={() => handleDownloadInvoice(tx.invoiceNo)}
-                                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d9d0c2] bg-white text-[#4d5149] transition hover:-translate-y-0.5 hover:bg-[#fbf7ef] hover:shadow-xs"
-                                  title="Download Invoice"
-                                >
-                                  <Download size={14} />
-                                </button>
-                              </td>
+                    <>
+                      {/* Desktop View (Table) */}
+                      <div className="hidden md:block overflow-x-auto bg-white">
+                        <table className="w-full border-collapse text-left text-sm">
+                          <thead>
+                            <tr className="border-b border-[#e4dbce] bg-[#fbf7ef]/50 text-xs font-semibold uppercase tracking-wider text-[#777a72]">
+                              <th className="px-6 py-4">Billing Date</th>
+                              <th className="px-6 py-4">Invoice No</th>
+                              <th className="px-6 py-4">Plan Name</th>
+                              <th className="px-6 py-4">Paid Amount</th>
+                              <th className="px-6 py-4">Status</th>
+                              <th className="px-6 py-4 text-right">Invoice</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody className="divide-y divide-[#ece4d8] text-[#4d5149]">
+                            {transactions.map((tx) => (
+                              <tr key={tx.id} className="transition hover:bg-[#fbf7ef]/50">
+                                <td className="whitespace-nowrap px-6 py-4 font-medium">{tx.date}</td>
+                                <td className="whitespace-nowrap px-6 py-4 text-[#777a72]">{tx.invoiceNo}</td>
+                                <td className="whitespace-nowrap px-6 py-4 font-medium">{tx.planName}</td>
+                                <td className="whitespace-nowrap px-6 py-4 font-semibold text-[var(--charcoal)]">{tx.amount}</td>
+                                <td className="whitespace-nowrap px-6 py-4">
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-[#cfe1cf] bg-[#eef6ed] px-2.5 py-0.5 text-xs font-medium text-[var(--green-dark)]">
+                                    <span className={`h-1.5 w-1.5 rounded-full ${
+                                      tx.status === "Paid" ? "bg-[var(--green)]" : "bg-yellow-500"
+                                    }`}></span>
+                                    {tx.status}
+                                  </span>
+                                </td>
+                                <td className="whitespace-nowrap px-6 py-4 text-right">
+                                  <button
+                                    onClick={() => handleDownloadInvoice(tx.invoiceNo)}
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d9d0c2] bg-white text-[#4d5149] transition hover:-translate-y-0.5 hover:bg-[#fbf7ef] hover:shadow-xs"
+                                    title="Download Invoice"
+                                  >
+                                    <Download size={14} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile View (Horizontal Slide/Carousel of Cards) */}
+                      <div className="md:hidden flex gap-4 overflow-x-auto pb-6 pt-2 px-4 snap-x snap-mandatory bg-white scroll-smooth">
+                        {transactions.map((tx) => (
+                          <div
+                            key={tx.id}
+                            className="min-w-[260px] sm:min-w-[300px] snap-center rounded-2xl border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-xs space-y-4 flex flex-col justify-between"
+                          >
+                            <div className="flex justify-between items-start gap-2">
+                              <div>
+                                <p className="text-[10px] font-bold text-[#777a72] uppercase tracking-wider">{tx.date}</p>
+                                <h4 className="font-bold text-sm text-[var(--charcoal)] mt-1">{tx.planName}</h4>
+                              </div>
+                              <span className="inline-flex items-center gap-1 rounded-full border border-[#cfe1cf] bg-[#eef6ed] px-2.5 py-0.5 text-xs font-medium text-[var(--green-dark)] shrink-0">
+                                <span className={`h-1.5 w-1.5 rounded-full ${
+                                  tx.status === "Paid" ? "bg-[var(--green)]" : "bg-yellow-500"
+                                }`}></span>
+                                {tx.status}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[#ece4d8] text-xs">
+                              <div>
+                                <p className="text-[9px] text-[#777a72] uppercase font-bold tracking-wider">Invoice No</p>
+                                <p className="font-semibold text-[var(--charcoal)] truncate">{tx.invoiceNo}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-[9px] text-[#777a72] uppercase font-bold tracking-wider">Amount</p>
+                                <p className="font-bold text-[var(--charcoal)]">{tx.amount}</p>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => handleDownloadInvoice(tx.invoiceNo)}
+                              className="mt-2 flex w-full h-10 items-center justify-center gap-2 rounded-xl border border-[#d9d0c2] bg-white text-xs font-semibold text-[#4d5149] transition hover:bg-[#fbf7ef] active:scale-95"
+                            >
+                              <Download size={14} />
+                              Download Invoice
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -560,12 +513,28 @@ export default function BillingPanel({
                   </div>
                 </div>
 
+                {/* Billing Period Card */}
+                {/* <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm">
+                  <h3 className="font-semibold text-sm tracking-tight uppercase text-[#666a61]">Billing Period</h3>
+                  <div className="mt-4 p-4 rounded-2xl bg-white border border-[#e4dbce] text-xs leading-5 text-[#666a61]">
+                    {activePlan === "free" ? (
+                      "You are currently on the Free Tier. Upgrades are active immediately."
+                    ) : (
+                      <p>
+                        Expired date:<br />
+                        <span className="font-semibold text-[var(--charcoal)]">{endedAt}</span><br />
+                        via Midtrans gateway.
+                      </p>
+                    )}
+                  </div>
+                </div> */}
+
                 {/* Billing Summary notice */}
                 <div className="rounded-[1.75rem] border border-[#e4dbce] bg-white p-5 shadow-sm space-y-4">
                   <div className="flex items-start gap-2.5 text-xs text-[#5f6673] leading-5">
                     <Info size={16} className="text-[var(--green)] shrink-0 mt-0.5" />
                     <p>
-                      Payments are processed securely via Midtrans. You can cancel or modify subscription cycles from this portal at any point.
+                      Payments are processed securely via Midtrans. Once purchased, plans are non-refundable.
                     </p>
                   </div>
                 </div>
@@ -593,8 +562,6 @@ export default function BillingPanel({
               </aside>
             </div>
           </div>
-        </section>
-      </div>
-    </main>
+        </>
   );
 }

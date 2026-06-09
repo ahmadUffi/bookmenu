@@ -25,7 +25,13 @@ export async function POST(request: Request) {
     }
 
     const price = plan === "monthly" ? 9000 : 99000;
-    const orderId = `SUB_${user.id}_${plan}_${Date.now()}`;
+
+    // Convert UUID to base64url to stay within Midtrans' 50-character limit
+    const hex = user.id.replace(/-/g, "");
+    const base64Uuid = Buffer.from(hex, "hex").toString("base64url");
+    // Generate a unique 6-character timestamp suffix in base36
+    const timestampSuffix = Date.now().toString(36).slice(-6);
+    const orderId = `SUB_${base64Uuid}_${plan}_${timestampSuffix}`;
 
     const serverKey = process.env.MIDTRANS_SERVER_KEY || "";
     const snapUrl = process.env.MIDTRANS_SNAP_URL || "";

@@ -7,6 +7,7 @@ type SupabaseClient = NonNullable<
 
 type RestaurantRow = {
   id: string;
+  owner_id: string;
   restaurant_name: string;
   slug: string;
   menus?: MenuRow[] | null;
@@ -23,10 +24,10 @@ type MenuRow = {
 };
 
 const withDocumentSlugSelect =
-  "id, restaurant_name, slug, menus(id, title, document_slug, pdf_url, thumbnail_url, is_active, created_at)";
+  "id, owner_id, restaurant_name, slug, menus(id, title, document_slug, pdf_url, thumbnail_url, is_active, created_at)";
 
 const legacySelect =
-  "id, restaurant_name, slug, menus(id, title, pdf_url, thumbnail_url, is_active, created_at)";
+  "id, owner_id, restaurant_name, slug, menus(id, title, pdf_url, thumbnail_url, is_active, created_at)";
 
 function sortMenus(menus: MenuRecord[]) {
   return menus.sort(
@@ -82,7 +83,7 @@ export async function getOwnerRestaurant(supabase: SupabaseClient, userId: strin
   const result = await supabase
     .from("restaurants")
     .select(
-      "id, restaurant_name, logo_url, slug, menus(id, title, document_slug, pdf_url, thumbnail_url, is_active, created_at)",
+      "id, owner_id, restaurant_name, logo_url, slug, menus(id, title, document_slug, pdf_url, thumbnail_url, is_active, created_at)",
     )
     .eq("owner_id", userId)
     .order("created_at", { ascending: true })
@@ -96,7 +97,7 @@ export async function getOwnerRestaurant(supabase: SupabaseClient, userId: strin
   const legacyResult = await supabase
     .from("restaurants")
     .select(
-      "id, restaurant_name, logo_url, slug, menus(id, title, pdf_url, thumbnail_url, is_active, created_at)",
+      "id, owner_id, restaurant_name, logo_url, slug, menus(id, title, pdf_url, thumbnail_url, is_active, created_at)",
     )
     .eq("owner_id", userId)
     .order("created_at", { ascending: true })

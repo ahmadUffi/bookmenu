@@ -45,12 +45,14 @@ export default async function DashboardBillingPage(
 
   const menus = mapRestaurantMenus([restaurant]);
 
+  const nowStr = new Date().toISOString();
   // 1. Fetch active subscription info from Supabase
-  const { data: activeSub } = await supabase
+  const { data: activeSub, error } = await supabase
     .from("subscriptions")
     .select("plan, status, ended_at")
     .eq("user_id", user.id)
     .eq("status", "active")
+    .gt("ended_at", "now()")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
