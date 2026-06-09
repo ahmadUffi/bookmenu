@@ -179,7 +179,7 @@ export default function SettingsPanel({
 
               <section className="space-y-5">
                 <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm">
-                  <h3 className="font-semibold">Billing & subscription</h3>
+                  <h3 className="font-semibold">Billing & plans</h3>
                   <p className="mt-2 text-sm leading-6 text-[#666a61]">
                     Manage your current plan, check quotas, usage details, and view payment invoices.
                   </p>

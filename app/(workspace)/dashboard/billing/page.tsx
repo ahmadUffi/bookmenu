@@ -97,14 +97,11 @@ export default async function DashboardBillingPage(
       id: sub.id,
       date: dateStr,
       invoiceNo,
-      planName: `${sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1)} Subscription`,
+      planName: `${sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1)} Plan`,
       amount: formattedPrice,
       status,
     };
   });
-
-  const midtransClientKey = process.env.MIDTRANS_CLIENT_KEY || "";
-  const midtransSnapUrl = process.env.MIDTRANS_SNAP_URL || "https://app.sandbox.midtrans.com/snap/snap.js";
 
   return (
     <BillingPanel
@@ -113,8 +110,6 @@ export default async function DashboardBillingPage(
       activePlan={activePlan}
       endedAt={endedAt}
       transactions={transactions}
-      midtransClientKey={midtransClientKey}
-      midtransSnapUrl={midtransSnapUrl}
     />
   );
 }
