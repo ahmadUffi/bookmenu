@@ -133,16 +133,35 @@ function svgText(
   return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="${family}" font-size="${size}" font-weight="${weight}" fill="${color}">${escapeSvgText(value)}</text>`;
 }
 
+function svgTableBadge(
+  value: string | undefined,
+  x = 450,
+  y = 1160,
+  fill = "#151924",
+  textColor = "#ffffff",
+) {
+  if (!value) return "";
+
+  const label = clampText(value, 18).toUpperCase();
+
+  return `<g>
+    <rect x="${x - 145}" y="${y - 42}" width="290" height="72" rx="36" fill="${fill}"/>
+    ${svgText(label, x, y + 5, 28, textColor, 900)}
+  </g>`;
+}
+
 export function getPrintTemplateSvg({
   design,
   menu,
   publicUrl,
+  tableNumber,
   templateId,
   text,
 }: {
   design: QrDesign;
   menu: MenuRecord;
   publicUrl: string;
+  tableNumber?: string;
   templateId: PrintTemplateId;
   text: PrintTemplateText;
 }) {
@@ -169,6 +188,7 @@ export function getPrintTemplateSvg({
       <image href="${qrData}" x="205" y="325" width="490" height="490"/>
       ${svgText(caption, 450, 960, 36, "#151924", 800)}
       ${svgText(footer, 450, 1030, 24, "#5f6673", 600)}
+      ${svgTableBadge(tableNumber, 450, 1134, "#0f172a", "#ffffff")}
     </svg>`;
   }
 
@@ -184,6 +204,7 @@ export function getPrintTemplateSvg({
       <image href="${qrData}" x="270" y="505" width="360" height="360"/>
       ${svgText(caption, 450, 950, 32, "#5a2012", 800)}
       ${svgText(footer, 450, 1140, 22, "#5a2012", 600)}
+      ${svgTableBadge(tableNumber, 450, 1040, "#5a2012", "#f6e8e0")}
     </svg>`;
   }
 
@@ -200,6 +221,7 @@ export function getPrintTemplateSvg({
       ${svgText(subtitle, 450, 995, 28, "#050505", 800)}
       ${svgText(caption, 450, 1060, 28, "#050505", 700)}
       ${svgText(footer, 450, 1115, 22, "#050505", 700)}
+      ${svgTableBadge(tableNumber, 450, 1174, "#050505", "#ffffff")}
     </svg>`;
   }
 
@@ -213,6 +235,7 @@ export function getPrintTemplateSvg({
       <image href="${qrData}" x="245" y="385" width="410" height="410"/>
       ${svgText(caption, 450, 1015, 44, "#f45a2a", 900)}
       ${svgText(footer, 450, 1070, 28, "#d85a35", 600)}
+      ${svgTableBadge(tableNumber, 450, 1148, "#f45a2a", "#fff8df")}
     </svg>`;
   }
 
@@ -227,6 +250,7 @@ export function getPrintTemplateSvg({
       ${svgText(caption, 450, 900, 31, "#777d62", 500, "middle", "Georgia, serif")}
       <rect x="220" y="990" width="460" height="54" rx="27" fill="#ffffff" stroke="#dce1bf" stroke-width="3"/>
       ${svgText(footer, 450, 1025, 20, "#777d62", 500, "middle", "Georgia, serif")}
+      ${svgTableBadge(tableNumber, 450, 1125, "#777d62", "#ffffff")}
     </svg>`;
   }
 
@@ -243,6 +267,7 @@ export function getPrintTemplateSvg({
     ${svgText(caption, 450, 990, 42, "#f1e8d8", 800, "middle", "Georgia, serif")}
     <path d="M135 1060h630" stroke="#d0c3ad" stroke-width="3"/>
     ${svgText(footer, 450, 1115, 19, "#f1e8d8", 700)}
+    ${svgTableBadge(tableNumber, 450, 1180, "#f1e8d8", "#30302f")}
   </svg>`;
 }
 
@@ -251,6 +276,7 @@ export async function downloadPrintTemplatePng({
   filename,
   menu,
   publicUrl,
+  tableNumber,
   templateId,
   text,
 }: {
@@ -258,6 +284,7 @@ export async function downloadPrintTemplatePng({
   filename: string;
   menu: MenuRecord;
   publicUrl: string;
+  tableNumber?: string;
   templateId: PrintTemplateId;
   text: PrintTemplateText;
 }) {
@@ -266,6 +293,7 @@ export async function downloadPrintTemplatePng({
     design,
     menu,
     publicUrl,
+    tableNumber,
     templateId,
     text,
   });

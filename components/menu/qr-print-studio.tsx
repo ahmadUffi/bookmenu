@@ -70,6 +70,9 @@ function storageKey(menuId: string) {
 
 type StoredQrSettings = {
   design?: Partial<QrDesign>;
+  tableNumberEnabled?: boolean;
+  tableNumberLabel?: string;
+  tableNumberStart?: number;
   templateId?: PrintTemplateId;
   templateText?: Partial<PrintTemplateText>;
 };
@@ -89,6 +92,9 @@ function readStoredSettings(menu: MenuRecord) {
       const templateId = defaultPrintTemplateId;
       return {
         design: defaultQrDesign,
+        tableNumberEnabled: false,
+        tableNumberLabel: "MEJA",
+        tableNumberStart: 1,
         templateId,
         templateText: getDefaultTemplateText(templateId, menu),
       };
@@ -108,6 +114,9 @@ function readStoredSettings(menu: MenuRecord) {
 
     return {
       design,
+      tableNumberEnabled: parsed.tableNumberEnabled ?? false,
+      tableNumberLabel: parsed.tableNumberLabel ?? "MEJA",
+      tableNumberStart: parsed.tableNumberStart ?? 1,
       templateId,
       templateText: mergeTemplateText(defaults, parsed.templateText),
     };
@@ -115,10 +124,27 @@ function readStoredSettings(menu: MenuRecord) {
     const templateId = defaultPrintTemplateId;
     return {
       design: defaultQrDesign,
+      tableNumberEnabled: false,
+      tableNumberLabel: "MEJA",
+      tableNumberStart: 1,
       templateId,
       templateText: getDefaultTemplateText(templateId, menu),
     };
   }
+}
+
+function getTableNumberLabel(
+  enabled: boolean,
+  label: string,
+  templateId: PrintTemplateId,
+  start: number,
+  copyNumber: number,
+) {
+  if (!enabled || templateId === "original") return undefined;
+
+  const safeStart = Math.max(1, Math.floor(start) || 1);
+  const safeLabel = label.trim() || "MEJA";
+  return `${safeLabel} ${safeStart + copyNumber - 1}`;
 }
 
 function ControlButton({
@@ -166,6 +192,15 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
         ? getDefaultTemplateText(defaultPrintTemplateId, firstMenu)
         : { caption: "", footer: "", headline: "", subheadline: "" }),
   );
+  const [tableNumberEnabled, setTableNumberEnabled] = useState(
+    initialSettings?.tableNumberEnabled ?? false,
+  );
+  const [tableNumberLabel, setTableNumberLabel] = useState(
+    initialSettings?.tableNumberLabel ?? "MEJA",
+  );
+  const [tableNumberStart, setTableNumberStart] = useState(
+    initialSettings?.tableNumberStart ?? 1,
+  );
   const [origin] = useState(() => getBrowserOrigin());
   const [copied, setCopied] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -190,19 +225,50 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
       design,
       menu: selectedMenu,
       publicUrl: absoluteUrl,
+      tableNumber: getTableNumberLabel(
+        tableNumberEnabled,
+        tableNumberLabel,
+        templateId,
+        tableNumberStart,
+        1,
+      ),
       templateId,
       text: templateText,
     });
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-  }, [absoluteUrl, design, selectedMenu, templateId, templateText]);
+  }, [
+    absoluteUrl,
+    design,
+    selectedMenu,
+    tableNumberEnabled,
+    tableNumberLabel,
+    tableNumberStart,
+    templateId,
+    templateText,
+  ]);
 
   useEffect(() => {
     if (!selectedMenu) return;
     window.localStorage.setItem(
       storageKey(selectedMenu.id),
-      JSON.stringify({ design, templateId, templateText }),
+      JSON.stringify({
+        design,
+        tableNumberEnabled,
+        tableNumberLabel,
+        tableNumberStart,
+        templateId,
+        templateText,
+      }),
     );
-  }, [design, selectedMenu, templateId, templateText]);
+  }, [
+    design,
+    selectedMenu,
+    tableNumberEnabled,
+    tableNumberLabel,
+    tableNumberStart,
+    templateId,
+    templateText,
+  ]);
 
   function updateDesign(next: Partial<QrDesign>) {
     setDesign((current) => ({ ...current, ...next }));
@@ -232,6 +298,13 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
       filename: `${selectedMenu.slug}-${selectedMenu.documentSlug}-${templateId}.png`,
       menu: selectedMenu,
       publicUrl: absoluteUrl,
+      tableNumber: getTableNumberLabel(
+        tableNumberEnabled,
+        tableNumberLabel,
+        templateId,
+        tableNumberStart,
+        1,
+      ),
       templateId,
       text: templateText,
     });
@@ -256,6 +329,9 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
 
     const nextSettings = readStoredSettings(nextMenu);
     setDesign(nextSettings.design);
+    setTableNumberEnabled(nextSettings.tableNumberEnabled);
+    setTableNumberLabel(nextSettings.tableNumberLabel);
+    setTableNumberStart(nextSettings.tableNumberStart);
     setTemplateId(nextSettings.templateId);
     setTemplateText(nextSettings.templateText);
   }
@@ -266,6 +342,9 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
 
     const defaults = getDefaultTemplateText(nextTemplateId, selectedMenu);
     setTemplateText(defaults);
+    if (nextTemplateId === "original") {
+      setTableNumberEnabled(false);
+    }
   }
 
   function updateTemplateText(field: keyof PrintTemplateText, value: string) {
@@ -275,6 +354,25 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
   function resetTemplateText() {
     if (!selectedMenu) return;
     setTemplateText(getDefaultTemplateText(templateId, selectedMenu));
+  }
+
+  function getTemplateImageUrl(copyNumber: number) {
+    if (!selectedMenu || !absoluteUrl) return "";
+    const svg = getPrintTemplateSvg({
+      design,
+      menu: selectedMenu,
+      publicUrl: absoluteUrl,
+      tableNumber: getTableNumberLabel(
+        tableNumberEnabled,
+        tableNumberLabel,
+        templateId,
+        tableNumberStart,
+        copyNumber,
+      ),
+      templateId,
+      text: templateText,
+    });
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   }
 
   if (!selectedMenu) {
@@ -453,6 +551,55 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
                     />
                   </label>
                 ))}
+
+                <div className="rounded-2xl border border-[#dbe2ea] bg-[#fbf7ef] p-3">
+                  <label className="flex items-center justify-between gap-3 text-sm font-semibold">
+                    <span>
+                      Aktifkan nomor meja
+                      <span className="mt-1 block text-xs font-medium leading-5 text-[#73766e]">
+                        Nomor otomatis mengikuti jumlah kartu print.
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={tableNumberEnabled}
+                      onChange={(event) =>
+                        setTableNumberEnabled(event.target.checked)
+                      }
+                      className="h-5 w-5 accent-[var(--green)]"
+                    />
+                  </label>
+                  {tableNumberEnabled ? (
+                    <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_120px]">
+                      <label className="block text-sm font-semibold">
+                        Label
+                        <input
+                          value={tableNumberLabel}
+                          maxLength={16}
+                          onChange={(event) =>
+                            setTableNumberLabel(event.target.value)
+                          }
+                          className="mt-2 min-h-11 w-full rounded-xl border border-[#ded5c7] bg-white px-3 text-sm outline-none transition focus:border-[var(--green)] focus:ring-4 focus:ring-[#426b4f]/15"
+                          placeholder="MEJA"
+                        />
+                      </label>
+                      <label className="block text-sm font-semibold">
+                        Mulai dari
+                        <input
+                          min={1}
+                          type="number"
+                          value={tableNumberStart}
+                          onChange={(event) =>
+                            setTableNumberStart(
+                              Math.max(1, Number(event.target.value) || 1),
+                            )
+                          }
+                          className="mt-2 min-h-11 w-full rounded-xl border border-[#ded5c7] bg-white px-3 text-sm outline-none transition focus:border-[var(--green)] focus:ring-4 focus:ring-[#426b4f]/15"
+                        />
+                      </label>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             ) : null}
 
@@ -682,10 +829,10 @@ export default function QrPrintStudio({ menus }: QrPrintStudioProps) {
                   key={copyNumber}
                   className="qr-print-card flex h-full items-center justify-center overflow-hidden rounded-xl border border-[#dbe2ea] bg-white p-1"
                 >
-                  {printTemplateImageUrl ? (
+                  {getTemplateImageUrl(copyNumber) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={printTemplateImageUrl}
+                      src={getTemplateImageUrl(copyNumber)}
                       alt={`${selectedMenu.title} QR print template`}
                       className="qr-template-print-image h-full w-full object-contain"
                     />
