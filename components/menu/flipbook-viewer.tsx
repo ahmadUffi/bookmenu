@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import HTMLFlipBook from "react-pageflip";
 import { ChevronLeft, ChevronRight, Loader2, Maximize2 } from "lucide-react";
@@ -25,6 +32,29 @@ type FlipbookHandle = {
   pageFlip: () => FlipbookController | null;
 };
 
+type FlipPageProps = {
+  children: ReactNode;
+  hard?: boolean;
+  height: number;
+  width: number;
+};
+
+const FlipPage = forwardRef<HTMLDivElement, FlipPageProps>(function FlipPage(
+  { children, hard = false, height, width },
+  ref,
+) {
+  return (
+    <div
+      ref={ref}
+      className="overflow-hidden rounded-xl bg-white shadow-xl"
+      data-density={hard ? "hard" : undefined}
+      style={{ width, height }}
+    >
+      {children}
+    </div>
+  );
+});
+
 export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<FlipbookHandle | null>(null);
@@ -48,7 +78,7 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
   const renderedPages = useMemo(() => {
     const currentPage = page + 1;
     return new Set(
-      pages.filter((pageNumber) => Math.abs(pageNumber - currentPage) <= 2),
+      pages.filter((pageNumber) => Math.abs(pageNumber - currentPage) <= 3),
     );
   }, [page, pages]);
 
@@ -128,10 +158,10 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
   }
 
   return (
-    <div className="flex h-full min-h-[100dvh] w-full flex-col overflow-hidden md:min-h-[58vh] md:overflow-visible">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
       <div
         ref={frameRef}
-        className="flex flex-1 min-h-0 items-center justify-center overflow-hidden rounded-none border-0 bg-white p-0 md:flex-none md:min-h-[58vh] md:overflow-visible md:rounded-[1.4rem] md:border md:border-[#e4dbce] md:p-2 sm:rounded-[2rem] sm:p-3"
+        className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-none border-0 bg-white p-0 md:rounded-[1.4rem] md:border md:border-[#dbeafe] md:p-2 sm:rounded-[2rem] sm:p-3"
       >
         <Document
           file={pdfUrl}
@@ -197,44 +227,50 @@ export default function FlipbookViewer({ pdfUrl }: FlipbookViewerProps) {
                   }
                 }}
               >
-                {pages.map((pageNumber) => (
-                  <div
-                    key={pageNumber}
-                    className="overflow-hidden rounded-xl bg-white shadow-xl"
-                  >
-                    {renderedPages.has(pageNumber) ? (
-                      <Page
-                        pageNumber={pageNumber}
-                        width={bookSize.width}
-                        devicePixelRatio={renderPixelRatio}
-                        renderAnnotationLayer={false}
-                        renderTextLayer={false}
-                        loading={
-                          <div
-                            className="flex items-center justify-center bg-[#f8fafc]"
-                            style={{
-                              width: bookSize.width,
-                              height: bookSize.height,
-                            }}
-                          >
-                            <Loader2
-                              className="animate-spin text-[var(--green)]"
-                              size={22}
-                            />
-                          </div>
-                        }
-                      />
-                    ) : (
-                      <div
-                        className="bg-[#f8fafc]"
-                        style={{
-                          width: bookSize.width,
-                          height: bookSize.height,
-                        }}
-                      />
-                    )}
-                  </div>
-                ))}
+                {pages.map((pageNumber) => {
+                  const isCover = pageNumber === 1 || pageNumber === numPages;
+
+                  return (
+                    <FlipPage
+                      key={pageNumber}
+                      hard={isCover}
+                      width={bookSize.width}
+                      height={bookSize.height}
+                    >
+                      {renderedPages.has(pageNumber) ? (
+                        <Page
+                          pageNumber={pageNumber}
+                          width={bookSize.width}
+                          devicePixelRatio={renderPixelRatio}
+                          renderAnnotationLayer={false}
+                          renderTextLayer={false}
+                          loading={
+                            <div
+                              className="flex items-center justify-center bg-[#f8fafc]"
+                              style={{
+                                width: bookSize.width,
+                                height: bookSize.height,
+                              }}
+                            >
+                              <Loader2
+                                className="animate-spin text-[var(--green)]"
+                                size={22}
+                              />
+                            </div>
+                          }
+                        />
+                      ) : (
+                        <div
+                          className="bg-[#f8fafc]"
+                          style={{
+                            width: bookSize.width,
+                            height: bookSize.height,
+                          }}
+                        />
+                      )}
+                    </FlipPage>
+                  );
+                })}
               </HTMLFlipBook>
             </div>
           ) : null}
