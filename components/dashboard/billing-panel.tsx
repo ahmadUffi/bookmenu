@@ -306,7 +306,7 @@ export default function BillingPanel({
                           Your Active Subscription Plan
                         </h2>
                         <p className="text-sm text-[#555950] mt-1.5">
-                          You are currently subscribed to the **{activePlan === "monthly" ? "Monthly Plan" : "Yearly Plan"}**. Thank you for supporting us!
+                          You are currently subscribed to the <b>{activePlan === "monthly" ? "Monthly Plan" : "Yearly Plan"}</b>. Thank you for supporting us!
                         </p>
                         <div className="mt-4 flex flex-wrap gap-2">
                           <div className="inline-flex items-center gap-2 rounded-xl bg-[#eef6ed] border border-[#cfe1cf] px-4 py-2 text-xs font-semibold text-[var(--green-dark)]">
