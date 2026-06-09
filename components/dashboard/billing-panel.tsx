@@ -315,7 +315,7 @@ export default function BillingPanel({
                           </div>
                           {endedAt && (
                             <div className="inline-flex items-center gap-2 rounded-xl bg-[#fbf7ef] border border-[#d9d0c2] px-4 py-2 text-xs font-semibold text-[#555950]">
-                              <span>Renewal Date: {endedAt}</span>
+                              <span>Expired Date: {endedAt}</span>
                             </div>
                           )}
                         </div>
@@ -514,27 +514,27 @@ export default function BillingPanel({
                 </div>
 
                 {/* Billing Period Card */}
-                <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm">
+                {/* <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm">
                   <h3 className="font-semibold text-sm tracking-tight uppercase text-[#666a61]">Billing Period</h3>
                   <div className="mt-4 p-4 rounded-2xl bg-white border border-[#e4dbce] text-xs leading-5 text-[#666a61]">
                     {activePlan === "free" ? (
                       "You are currently on the Free Tier. Upgrades are active immediately."
                     ) : (
                       <p>
-                        Renewal date:<br />
+                        Expired date:<br />
                         <span className="font-semibold text-[var(--charcoal)]">{endedAt}</span><br />
                         via Midtrans gateway.
                       </p>
                     )}
                   </div>
-                </div>
+                </div> */}
 
                 {/* Billing Summary notice */}
                 <div className="rounded-[1.75rem] border border-[#e4dbce] bg-white p-5 shadow-sm space-y-4">
                   <div className="flex items-start gap-2.5 text-xs text-[#5f6673] leading-5">
                     <Info size={16} className="text-[var(--green)] shrink-0 mt-0.5" />
                     <p>
-                      Payments are processed securely via Midtrans. You can cancel or modify subscription cycles from this portal at any point.
+                      Payments are processed securely via Midtrans. Once purchased, plans are non-refundable.
                     </p>
                   </div>
                 </div>
