@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     // If API Key is not set or is mock/development, return a mock QRIS response for simulation
     if (!apiKey || apiKey === "mock-qrisly-api-key-12345" || apiKey.startsWith("mock-")) {
       console.log("Using Mock QRISly Integration (Development Mode)");
-      const mockQrContent = `000201010212430038000000000000000000000000000000000052045999530336054${price}5802ID5918BookMenu Subscription6009Yogyakarta61055512362070703A016304abcd`;
+      const mockQrContent = `000201010212430038000000000000000000000000000000000052045999530336054${price}5802ID5918BookMenu Payment6009Yogyakarta61055512362070703A016304abcd`;
       const mockQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(mockQrContent)}`;
       const mockHistoryId = `mock_hist_${Date.now()}`;
 

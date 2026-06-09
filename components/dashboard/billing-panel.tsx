@@ -174,7 +174,7 @@ export default function BillingPanel({
                 {activePlan === "free" ? (
                   <div className="rounded-[1.75rem] border border-[#e4dbce] bg-white p-6 shadow-[var(--shadow-card)]">
                     <div className="mb-6">
-                      <h2 className="text-xl font-semibold tracking-tight">Select Subscription Plan</h2>
+                      <h2 className="text-xl font-semibold tracking-tight">Select Plan / Active Period</h2>
                       <p className="text-sm text-[#666a61]">
                         Choose the plan that suits your publishing frequency and scan volumes.
                       </p>
@@ -192,7 +192,7 @@ export default function BillingPanel({
                           <h3 className="font-semibold text-[var(--charcoal)]">Free</h3>
                           <div className="mt-3 flex items-baseline">
                             <span className="text-2xl font-bold tracking-tight">Rp0</span>
-                            <span className="ml-1 text-xs text-[#666a61]">/ month</span>
+                            <span className="ml-1 text-xs text-[#666a61]">/ lifetime</span>
                           </div>
                           <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
                             <li className="flex items-center gap-1.5">
@@ -230,7 +230,7 @@ export default function BillingPanel({
                           <h3 className="font-semibold text-[var(--charcoal)]">Monthly</h3>
                           <div className="mt-3 flex items-baseline">
                             <span className="text-2xl font-bold tracking-tight">Rp9.000,00</span>
-                            <span className="ml-1 text-xs text-[#666a61]">/ month</span>
+                            <span className="ml-1 text-xs text-[#666a61]">/ 30 Days</span>
                           </div>
                           <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
                             <li className="flex items-center gap-1.5">
@@ -267,7 +267,7 @@ export default function BillingPanel({
                           <h3 className="font-semibold text-[var(--charcoal)]">Yearly</h3>
                           <div className="mt-3 flex items-baseline">
                             <span className="text-2xl font-bold tracking-tight">Rp99.000,00</span>
-                            <span className="ml-1 text-xs text-[#666a61]">/ year</span>
+                            <span className="ml-1 text-xs text-[#666a61]">/ 1 Year</span>
                           </div>
                           <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
                             <li className="flex items-center gap-1.5">
@@ -302,10 +302,10 @@ export default function BillingPanel({
                       </div>
                       <div>
                         <h2 className="text-xl font-semibold tracking-tight text-[var(--green-dark)]">
-                          Your Active Subscription Plan
+                          Your Active Plan & Period
                         </h2>
                         <p className="text-sm text-[#555950] mt-1.5">
-                          You are currently subscribed to the <b>{activePlan === "monthly" ? "Monthly Plan" : "Yearly Plan"}</b>. Thank you for supporting us!
+                          Your account currently has an active <b>{activePlan === "monthly" ? "Monthly Plan (30 Days)" : "Yearly Plan (1 Year)"}</b> active period. Thank you for supporting us!
                         </p>
                         <div className="mt-4 flex flex-wrap gap-2">
                           <div className="inline-flex items-center gap-2 rounded-xl bg-[#eef6ed] border border-[#cfe1cf] px-4 py-2 text-xs font-semibold text-[var(--green-dark)]">

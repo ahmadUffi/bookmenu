@@ -97,7 +97,7 @@ export default async function DashboardBillingPage(
       id: sub.id,
       date: dateStr,
       invoiceNo,
-      planName: `${sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1)} Subscription`,
+      planName: `${sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1)} Plan`,
       amount: formattedPrice,
       status,
     };
