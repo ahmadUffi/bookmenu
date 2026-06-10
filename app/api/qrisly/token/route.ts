@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     if (!(plan === "monthly" && isNewUser)) {
       const { data: existingPendingSub, error: pendingError } = await adminDb
         .from("subscriptions")
-        .select("id, price, qrisly_response")
+        .select("id, price, qrisly_response, created_at, started_at")
         .eq("user_id", user.id)
         .eq("plan", plan)
         .is("ended_at", null)
@@ -68,9 +68,28 @@ export async function POST(request: Request) {
         return responseStatus === "pending" || !responseStatus;
       });
 
-      if (pendingSub && pendingSub.qrisly_response) {
-        console.log(`Reusing existing pending subscription for user ${user.id}, plan ${plan}`);
-        return NextResponse.json(pendingSub.qrisly_response);
+      if (pendingSub) {
+        const createdAt = new Date(pendingSub.created_at || pendingSub.started_at);
+        const ageInMs = Date.now() - createdAt.getTime();
+        const EXPIRE_TIMEOUT = 60 * 60 * 1000; // 1 hour
+
+        if (ageInMs > EXPIRE_TIMEOUT) {
+          // It's expired! Update database status to "expired"
+          const updatedResponse = typeof pendingSub.qrisly_response === 'object' && pendingSub.qrisly_response !== null
+            ? { ...(pendingSub.qrisly_response as any), status: "expired" }
+            : { status: "expired" };
+
+          await adminDb
+            .from("subscriptions")
+            .update({
+              qrisly_response: updatedResponse,
+              ended_at: new Date().toISOString(),
+            })
+            .eq("id", pendingSub.id);
+        } else if (pendingSub.qrisly_response) {
+          console.log(`Reusing existing pending subscription for user ${user.id}, plan ${plan}`);
+          return NextResponse.json(pendingSub.qrisly_response);
+        }
       }
     }
 

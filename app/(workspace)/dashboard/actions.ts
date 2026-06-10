@@ -158,15 +158,20 @@ export async function uploadMenu(formData: FormData) {
 
   // Enforce upload limits based on active subscription plan
   const nowStr = new Date().toISOString();
-  const { data: activeSub } = await supabase
+  const { data: activeSubs } = await supabase
     .from("subscriptions")
-    .select("plan")
+    .select("plan, price, qrisly_response")
     .eq("user_id", user.id)
-    .eq("status", "active")
     .gt("ended_at", nowStr)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
+
+  const activeSub = (activeSubs ?? []).find(sub => {
+    if (sub.price === 0) return true;
+    const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+      ? (sub.qrisly_response as any).status
+      : null;
+    return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+  });
 
   const plan = activeSub?.plan || "free";
   let uploadLimit = 1;

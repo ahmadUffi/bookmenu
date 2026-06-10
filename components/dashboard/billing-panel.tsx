@@ -35,6 +35,12 @@ type BillingPanelProps = {
   endedAt: string | null;
   transactions: Transaction[];
   isPromoEligible?: boolean;
+  activeChain?: {
+    id: string;
+    plan: string;
+    startedAt: string;
+    endedAt: string | null;
+  }[];
 };
 
 type PlanType = "free" | "monthly" | "yearly";
@@ -46,6 +52,7 @@ export default function BillingPanel({
   endedAt,
   transactions,
   isPromoEligible = false,
+  activeChain = [],
 }: BillingPanelProps) {
   const [selectedPlan, setSelectedPlan] = useState<PlanType>(activePlan);
   const [notice, setNotice] = useState<string | null>(null);
@@ -62,6 +69,10 @@ export default function BillingPanel({
   const [showConfirmPromoModal, setShowConfirmPromoModal] = useState(false);
 
   const totalMenusCount = initialMenus.length;
+
+  const sortedChain = [...(activeChain ?? [])].sort(
+    (a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()
+  );
 
   // Plan Details Map
   const plans = {
@@ -95,7 +106,6 @@ export default function BillingPanel({
   const currentPlanDetails = plans[selectedPlan];
 
   const handlePlanCheckout = async (plan: PlanType) => {
-    if (plan === activePlan) return;
     if (plan === "free") {
       setNotice("Please contact support to cancel or downgrade your active plan.");
       return;
@@ -181,159 +191,14 @@ export default function BillingPanel({
               {/* Left Column: Plans & History */}
               <div className="space-y-6 min-w-0">
                 {/* Pricing List */}
-                {activePlan === "free" ? (
-                  <div className="rounded-[1.75rem] border border-[#e4dbce] bg-white p-6 shadow-[var(--shadow-card)]">
-                    <div className="mb-6">
-                      <h2 className="text-xl font-semibold tracking-tight">Select Plan / Active Period</h2>
-                      <p className="text-sm text-[#666a61]">
-                        Choose the plan that suits your publishing frequency and scan volumes.
-                      </p>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-3">
-                      {/* Free Card */}
-                      <div
-                        className="relative flex flex-col justify-between rounded-2xl border p-5 border-[var(--green)] bg-[var(--green-soft)]/20 shadow-sm"
-                      >
-                        <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white">
-                          Active Plan
-                        </span>
-                        <div>
-                          <h3 className="font-semibold text-[var(--charcoal)]">Free</h3>
-                          <div className="mt-3 flex items-baseline">
-                            <span className="text-2xl font-bold tracking-tight">Rp0</span>
-                            <span className="ml-1 text-xs text-[#666a61]">/ lifetime</span>
-                          </div>
-                          <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
-                            <li className="flex items-center gap-1.5">
-                              <Check size={14} className="text-[var(--green)] shrink-0" />
-                              <span>1x PDF upload</span>
-                            </li>
-                            <li className="flex items-center gap-1.5">
-                              <Check size={14} className="text-[var(--green)] shrink-0" />
-                              <span>QR Menu</span>
-                            </li>
-                            <li className="flex items-center gap-1.5">
-                              <Check size={14} className="text-[var(--green)] shrink-0" />
-                              <span>1000x QR Scan</span>
-                            </li>
-                            <li className="flex items-center gap-1.5">
-                              <Check size={14} className="text-[var(--green)] shrink-0" />
-                              <span>Owner dashboard</span>
-                            </li>
-                          </ul>
-                        </div>
-                        <button
-                          onClick={() => handlePlanCheckout("free")}
-                          disabled={true}
-                          className="mt-6 w-full rounded-xl py-2.5 text-xs font-semibold bg-[var(--green)] text-white cursor-default"
-                        >
-                          Current Plan
-                        </button>
-                      </div>
-
-                      {/* Monthly Card */}
-                      <div
-                        className="relative flex flex-col justify-between rounded-2xl border p-5 border-[#e4dbce] bg-[#fffdf8] hover:border-[#cbd5e1]"
-                      >
-                        {isPromoEligible && (
-                          <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wider">
-                            Promo Rp0
-                          </span>
-                        )}
-                        <div>
-                          <h3 className="font-semibold text-[var(--charcoal)]">Monthly</h3>
-                          <div className="mt-3 flex items-baseline">
-                            {isPromoEligible ? (
-                              <>
-                                <span className="text-2xl font-bold tracking-tight text-[var(--green)]">Rp0</span>
-                                <span className="ml-2 text-xs text-gray-400 line-through">Rp9.000,00</span>
-                              </>
-                            ) : (
-                              <span className="text-2xl font-bold tracking-tight">Rp9.000,00</span>
-                            )}
-                            <span className="ml-1 text-xs text-[#666a61]">/ 30 Days</span>
-                          </div>
-                          {isPromoEligible && (
-                            <p className="mt-1 text-[10px] text-[var(--green-dark)] font-medium">
-                              New user promo: First purchase is FREE!
-                            </p>
-                          )}
-                          <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
-                            <li className="flex items-center gap-1.5">
-                              <Check size={14} className="text-[var(--green)] shrink-0" />
-                              <span>5x PDF upload</span>
-                            </li>
-                            <li className="flex items-center gap-1.5">
-                              <Check size={14} className="text-[var(--green)] shrink-0" />
-                              <span>Unlimited QR Scan</span>
-                            </li>
-                            <li className="flex items-center gap-1.5">
-                              <Check size={14} className="text-[var(--green)] shrink-0" />
-                              <span>Custom QR</span>
-                            </li>
-                          </ul>
-                        </div>
-                        <button
-                          onClick={() => {
-                            if (isPromoEligible) {
-                              setShowConfirmPromoModal(true);
-                            } else {
-                              handlePlanCheckout("monthly");
-                            }
-                          }}
-                          disabled={loading}
-                          className="mt-6 w-full rounded-xl py-2.5 text-xs font-semibold border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef] disabled:opacity-50"
-                        >
-                          {loading ? "Loading..." : "Choose Monthly"}
-                        </button>
-                      </div>
-
-                      {/* Yearly Card - Best Value */}
-                      <div
-                        className="relative flex flex-col justify-between rounded-2xl border-2 p-5 border-[#ded5c7] bg-[#fffdf8] hover:border-[#cbd5e1]"
-                      >
-                        <span className="absolute -top-2.5 right-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
-                          Best Value
-                        </span>
-                        <div>
-                          <h3 className="font-semibold text-[var(--charcoal)]">Yearly</h3>
-                          <div className="mt-3 flex items-baseline">
-                            <span className="text-2xl font-bold tracking-tight">Rp99.000,00</span>
-                            <span className="ml-1 text-xs text-[#666a61]">/ 1 Year</span>
-                          </div>
-                          <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
-                            <li className="flex items-center gap-1.5">
-                              <Check size={14} className="text-[var(--green)] shrink-0" />
-                              <span>5x PDF upload</span>
-                            </li>
-                            <li className="flex items-center gap-1.5">
-                              <Check size={14} className="text-[var(--green)] shrink-0" />
-                              <span>Unlimited QR Scan</span>
-                            </li>
-                            <li className="flex items-center gap-1.5">
-                              <Check size={14} className="text-[var(--green)] shrink-0" />
-                              <span>Custom QR</span>
-                            </li>
-                          </ul>
-                        </div>
-                        <button
-                          onClick={() => handlePlanCheckout("yearly")}
-                          disabled={loading}
-                          className="mt-6 w-full rounded-xl py-2.5 text-xs font-semibold border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef] disabled:opacity-50"
-                        >
-                          {loading ? "Loading..." : "Choose Yearly"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
+                {/* Active Plan Card (Visible when plan is not free) */}
+                {activePlan !== "free" && (
                   <div className="rounded-[1.75rem] border border-[#cfe1cf] bg-white p-6 shadow-[var(--shadow-card)]">
                     <div className="flex items-start gap-4">
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--green-soft)] text-[var(--green)]">
                         <Sparkles size={20} />
                       </div>
-                      <div>
+                      <div className="w-full">
                         <h2 className="text-xl font-semibold tracking-tight text-[var(--green-dark)]">
                           Your Active Plan & Period
                         </h2>
@@ -351,13 +216,251 @@ export default function BillingPanel({
                             </div>
                           )}
                         </div>
+
+                        {/* Display subscription chain schedule if they have multiple active/queued subscriptions */}
+                        {sortedChain.length > 1 && (
+                          <div className="mt-5 border-t border-[#cfe1cf]/60 pt-4">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--green-dark)] mb-3 flex items-center gap-1.5">
+                              <Sparkles size={14} className="text-[var(--green)] animate-pulse" />
+                              Subscription Schedule (Antrean Paket)
+                            </h4>
+                            <div className="space-y-2.5">
+                              {sortedChain.map((sub, idx) => {
+                                const isFirst = idx === 0;
+                                const subPlanName = sub.plan === "monthly" ? "Monthly Plan" : "Yearly Plan";
+                                const startStr = new Date(sub.startedAt).toLocaleDateString("en-US", {
+                                  month: "short", day: "numeric", year: "numeric"
+                                });
+                                const endStr = sub.endedAt
+                                  ? new Date(sub.endedAt).toLocaleDateString("en-US", {
+                                      month: "short", day: "numeric", year: "numeric"
+                                    })
+                                  : "lifetime";
+                                
+                                return (
+                                  <div key={sub.id} className="flex items-center justify-between text-xs p-3 rounded-2xl bg-[#eef6ed]/60 border border-[#cfe1cf]/40">
+                                    <div>
+                                      <span className="font-semibold text-[var(--green-dark)]">{subPlanName}</span>
+                                      <span className="text-[10px] text-[#555950] block mt-0.5">
+                                        {startStr} - {endStr}
+                                      </span>
+                                    </div>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                      isFirst 
+                                        ? "bg-[var(--green)] text-white" 
+                                        : "bg-amber-100 text-amber-800 border border-amber-200"
+                                    }`}>
+                                      {isFirst ? "Active Now" : "Queued"}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
                         <p className="text-xs text-[#777a72] mt-4 leading-relaxed">
-                          Self-service upgrades or downgrades are currently disabled. Please contact support if you need to make changes to your plan.
+                          Self-service downgrades are currently disabled. Please contact support if you need to downgrade or cancel your subscription.
                         </p>
                       </div>
                     </div>
                   </div>
                 )}
+
+                {/* Pricing / Extension List */}
+                <div className="rounded-[1.75rem] border border-[#e4dbce] bg-white p-6 shadow-[var(--shadow-card)]">
+                  <div className="mb-6">
+                    <h2 className="text-xl font-semibold tracking-tight">
+                      {activePlan === "free" ? "Select Plan / Active Period" : "Extend / Change Plan"}
+                    </h2>
+                    <p className="text-sm text-[#666a61]">
+                      {activePlan === "free" 
+                        ? "Choose the plan that suits your publishing frequency and scan volumes."
+                        : "You can purchase additional packages to extend your active subscription. They will be queued automatically."}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {/* Free Card */}
+                    <div
+                      className={`relative flex flex-col justify-between rounded-2xl border p-5 ${
+                        activePlan === "free"
+                          ? "border-[var(--green)] bg-[var(--green-soft)]/20 shadow-sm"
+                          : "border-[#e4dbce] bg-gray-50/50 opacity-60"
+                      }`}
+                    >
+                      {activePlan === "free" && (
+                        <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white">
+                          Active Plan
+                        </span>
+                      )}
+                      <div>
+                        <h3 className="font-semibold text-[var(--charcoal)]">Free</h3>
+                        <div className="mt-3 flex items-baseline">
+                          <span className="text-2xl font-bold tracking-tight">Rp0</span>
+                          <span className="ml-1 text-xs text-[#666a61]">/ lifetime</span>
+                        </div>
+                        <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
+                          <li className="flex items-center gap-1.5">
+                            <Check size={14} className="text-[var(--green)] shrink-0" />
+                            <span>1x PDF upload</span>
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <Check size={14} className="text-[var(--green)] shrink-0" />
+                            <span>QR Menu</span>
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <Check size={14} className="text-[var(--green)] shrink-0" />
+                            <span>1000x QR Scan</span>
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <Check size={14} className="text-[var(--green)] shrink-0" />
+                            <span>Owner dashboard</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <button
+                        onClick={() => handlePlanCheckout("free")}
+                        disabled={true}
+                        className={`mt-6 w-full rounded-xl py-2.5 text-xs font-semibold ${
+                          activePlan === "free"
+                            ? "bg-[var(--green)] text-white cursor-default"
+                            : "border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                        }`}
+                      >
+                        {activePlan === "free" ? "Current Plan" : "Downgrade requires support"}
+                      </button>
+                    </div>
+
+                    {/* Monthly Card */}
+                    <div
+                      className={`relative flex flex-col justify-between rounded-2xl border p-5 bg-[#fffdf8] hover:border-[#cbd5e1] ${
+                        activePlan === "monthly"
+                          ? "border-[var(--green)] ring-2 ring-[var(--green)]/15 shadow-sm"
+                          : "border-[#e4dbce]"
+                      }`}
+                    >
+                      {activePlan === "monthly" && (
+                        <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white">
+                          Active Plan
+                        </span>
+                      )}
+                      {isPromoEligible && (
+                        <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wider">
+                          Promo Rp0
+                        </span>
+                      )}
+                      <div>
+                        <h3 className="font-semibold text-[var(--charcoal)]">Monthly</h3>
+                        <div className="mt-3 flex items-baseline">
+                          {isPromoEligible ? (
+                            <>
+                              <span className="text-2xl font-bold tracking-tight text-[var(--green)]">Rp0</span>
+                              <span className="ml-2 text-xs text-gray-400 line-through">Rp9.000,00</span>
+                            </>
+                          ) : (
+                            <span className="text-2xl font-bold tracking-tight">Rp9.000,00</span>
+                          )}
+                          <span className="ml-1 text-xs text-[#666a61]">/ 30 Days</span>
+                        </div>
+                        {isPromoEligible && (
+                          <p className="mt-1 text-[10px] text-[var(--green-dark)] font-medium">
+                            New user promo: First purchase is FREE!
+                          </p>
+                        )}
+                        <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
+                          <li className="flex items-center gap-1.5">
+                            <Check size={14} className="text-[var(--green)] shrink-0" />
+                            <span>5x PDF upload</span>
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <Check size={14} className="text-[var(--green)] shrink-0" />
+                            <span>Unlimited QR Scan</span>
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <Check size={14} className="text-[var(--green)] shrink-0" />
+                            <span>Custom QR</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (isPromoEligible) {
+                            setShowConfirmPromoModal(true);
+                          } else {
+                            handlePlanCheckout("monthly");
+                          }
+                        }}
+                        disabled={loading}
+                        className={`mt-6 w-full rounded-xl py-2.5 text-xs font-semibold border transition disabled:opacity-50 ${
+                          activePlan === "monthly"
+                            ? "border-[var(--green)] bg-[var(--green)] text-white hover:bg-[var(--green-dark)]"
+                            : "border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef]"
+                        }`}
+                      >
+                        {loading 
+                          ? "Loading..." 
+                          : activePlan === "monthly" 
+                            ? "Extend Monthly" 
+                            : "Choose Monthly"}
+                      </button>
+                    </div>
+
+                    {/* Yearly Card - Best Value */}
+                    <div
+                      className={`relative flex flex-col justify-between rounded-2xl border p-5 bg-[#fffdf8] hover:border-[#cbd5e1] ${
+                        activePlan === "yearly"
+                          ? "border-[var(--green)] ring-2 ring-[var(--green)]/15 shadow-sm"
+                          : "border-[#ded5c7]"
+                      }`}
+                    >
+                      {activePlan === "yearly" && (
+                        <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white">
+                          Active Plan
+                        </span>
+                      )}
+                      <span className="absolute -top-2.5 right-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[9px] font-bold text-white uppercase tracking-wider shadow-sm">
+                        Best Value
+                      </span>
+                      <div>
+                        <h3 className="font-semibold text-[var(--charcoal)]">Yearly</h3>
+                        <div className="mt-3 flex items-baseline">
+                          <span className="text-2xl font-bold tracking-tight">Rp99.000,00</span>
+                          <span className="ml-1 text-xs text-[#666a61]">/ 1 Year</span>
+                        </div>
+                        <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
+                          <li className="flex items-center gap-1.5">
+                            <Check size={14} className="text-[var(--green)] shrink-0" />
+                            <span>5x PDF upload</span>
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <Check size={14} className="text-[var(--green)] shrink-0" />
+                            <span>Unlimited QR Scan</span>
+                          </li>
+                          <li className="flex items-center gap-1.5">
+                            <Check size={14} className="text-[var(--green)] shrink-0" />
+                            <span>Custom QR</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <button
+                        onClick={() => handlePlanCheckout("yearly")}
+                        disabled={loading}
+                        className={`mt-6 w-full rounded-xl py-2.5 text-xs font-semibold border transition disabled:opacity-50 ${
+                          activePlan === "yearly"
+                            ? "border-[var(--green)] bg-[var(--green)] text-white hover:bg-[var(--green-dark)]"
+                            : "border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef]"
+                        }`}
+                      >
+                        {loading 
+                          ? "Loading..." 
+                          : activePlan === "yearly" 
+                            ? "Extend Yearly" 
+                            : "Choose Yearly"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
 
 

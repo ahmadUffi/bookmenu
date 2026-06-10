@@ -45,17 +45,17 @@ export default async function DashboardBillingPage(
 
   const menus = mapRestaurantMenus([restaurant]);
 
-  const nowStr = new Date().toISOString();
+  const now = new Date();
   // 1. Fetch all subscriptions from Supabase to find active ones and history
   const { data: rawHistory } = await supabase
     .from("subscriptions")
-    .select("id, created_at, plan, price, ended_at, qrisly_response")
+    .select("id, created_at, plan, price, started_at, ended_at, qrisly_response")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  // Find the active subscription: ended_at > now() and paid/promo
-  const activeSub = (rawHistory ?? []).find(sub => {
-    if (sub.ended_at && new Date(sub.ended_at) <= new Date()) return false;
+  // Find all active/paid/promo subscriptions for the user that have ended_at in the future
+  const activeSubs = (rawHistory ?? []).filter(sub => {
+    if (sub.ended_at && new Date(sub.ended_at) <= now) return false;
     if (sub.price === 0) return true;
     const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
       ? (sub.qrisly_response as any).status
@@ -63,14 +63,40 @@ export default async function DashboardBillingPage(
     return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
   });
 
+  // Determine currently running subscription (started_at <= now <= ended_at)
+  const currentlyRunningSub = activeSubs.find(sub => {
+    const start = new Date(sub.started_at || sub.created_at);
+    const end = sub.ended_at ? new Date(sub.ended_at) : null;
+    return start <= now && (!end || end > now);
+  });
+
+  // If none covers now, fallback to the latest active subscription (if any)
+  const activeSub = currentlyRunningSub || activeSubs[0];
+
   const activePlan = activeSub ? (activeSub.plan as "monthly" | "yearly") : "free";
-  const endedAt = activeSub?.ended_at
-    ? new Date(activeSub.ended_at).toLocaleDateString("en-US", {
+
+  // Calculate the overall ended_at of the entire active subscription chain (the max ended_at)
+  let endedAt: string | null = null;
+  if (activeSubs.length > 0) {
+    const endDates = activeSubs
+      .map(sub => sub.ended_at ? new Date(sub.ended_at).getTime() : 0)
+      .filter(time => time > 0);
+    if (endDates.length > 0) {
+      endedAt = new Date(Math.max(...endDates)).toLocaleDateString("en-US", {
         month: "long",
         day: "numeric",
         year: "numeric",
-      })
-    : null;
+      });
+    }
+  }
+
+  // Map the active subscription chain
+  const activeChain = activeSubs.map(sub => ({
+    id: sub.id,
+    plan: sub.plan,
+    startedAt: sub.started_at || sub.created_at,
+    endedAt: sub.ended_at,
+  }));
 
   const transactions = (rawHistory ?? []).map((sub) => {
     const dateStr = new Date(sub.created_at).toLocaleDateString("en-US", {
@@ -128,6 +154,7 @@ export default async function DashboardBillingPage(
       endedAt={endedAt}
       transactions={transactions}
       isPromoEligible={isPromoEligible}
+      activeChain={activeChain}
     />
   );
 }
