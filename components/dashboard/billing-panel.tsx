@@ -88,7 +88,7 @@ export default function BillingPanel({
       name: "Monthly Plan",
       price: "Rp9.000,00",
       period: "month",
-      pdfLimit: 5,
+      pdfLimit: 10,
       scanLimit: "Unlimited",
       scansUsed: 1240,
     },
@@ -96,7 +96,7 @@ export default function BillingPanel({
       name: "Yearly Plan",
       price: "Rp99.000,00",
       period: "year",
-      pdfLimit: 5,
+      pdfLimit: 10,
       scanLimit: "Unlimited",
       scansUsed: 1240,
     },
@@ -444,7 +444,7 @@ export default function BillingPanel({
                           size={14}
                           className="text-[var(--green)] shrink-0"
                         />
-                        <span>5x PDF upload</span>
+                        <span>10x PDF upload</span>
                       </li>
                       <li className="flex items-center gap-1.5">
                         <Check
@@ -519,7 +519,7 @@ export default function BillingPanel({
                           size={14}
                           className="text-[var(--green)] shrink-0"
                         />
-                        <span>5x PDF upload</span>
+                        <span>10x PDF upload</span>
                       </li>
                       <li className="flex items-center gap-1.5">
                         <Check

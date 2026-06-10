@@ -53,7 +53,7 @@ export default function DashboardApp({
   plan,
 }: DashboardAppProps) {
   const menus = initialMenus;
-  const uploadLimit = plan === "monthly" ? 5 : plan === "yearly" ? 5 : 1;
+  const uploadLimit = plan === "monthly" ? 10 : plan === "yearly" ? 10 : 1;
   const isLimitReached = menus.length >= uploadLimit;
 
   const restaurantName =

@@ -176,9 +176,9 @@ export async function uploadMenu(formData: FormData) {
   const plan = activeSub?.plan || "free";
   let uploadLimit = 1;
   if (plan === "monthly") {
-    uploadLimit = 5;
+    uploadLimit = 10;
   } else if (plan === "yearly") {
-    uploadLimit = 5;
+    uploadLimit = 10;
   }
 
   const { count, error: countError } = await supabase
