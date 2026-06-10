@@ -58,8 +58,8 @@ export async function GET(request: Request) {
       const data = result.data || result;
       
       // Determine status from payload
-      paymentStatus = data.status || data.payment_status || "pending";
-      isSuccess = paymentStatus === "success" || paymentStatus === "settlement" || paymentStatus === "paid" || paymentStatus === "Success" || paymentStatus === "SUCCESS";
+      paymentStatus = String(data.status || data.payment_status || "pending").toLowerCase();
+      isSuccess = paymentStatus === "paid";
     }
 
     // If payment is successful, update subscription in DB (acting as a fallback/accelerator for webhook)
@@ -104,9 +104,9 @@ export async function GET(request: Request) {
         // Determine if targetSub is already activated
         const isTargetAlreadyActivated = targetSub && targetSub.ended_at !== null && (() => {
           const responseStatus = typeof targetSub.qrisly_response === 'object' && targetSub.qrisly_response !== null
-            ? (targetSub.qrisly_response as any).status
+            ? String((targetSub.qrisly_response as any).status).toLowerCase()
             : null;
-          return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+          return responseStatus === "paid";
         })();
 
         if (!isTargetAlreadyActivated) {
@@ -121,9 +121,9 @@ export async function GET(request: Request) {
           const validActiveSubs = (existingActiveSubs ?? []).filter(sub => {
             if (sub.price === 0) return true; // promo
             const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-              ? (sub.qrisly_response as any).status
+              ? String((sub.qrisly_response as any).status).toLowerCase()
               : null;
-            return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+            return responseStatus === "paid";
           });
 
           let finalStartedAt = new Date();
@@ -192,15 +192,7 @@ export async function GET(request: Request) {
       }
     } else if (!isSuccess && orderId.startsWith("SUB_")) {
       // If it is failed/expired/canceled, update the record in DB so it doesn't stay pending forever
-      const isFailed = [
-        "cancel",
-        "expire",
-        "deny",
-        "failed",
-        "FAILED",
-        "expired",
-        "cancelled"
-      ].includes(paymentStatus);
+      const isFailed = paymentStatus === "expired";
 
       if (isFailed) {
         const parts = orderId.split("_");

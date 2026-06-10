@@ -65,20 +65,15 @@ export async function POST(request: Request) {
 
     const { user_id: userId, plan, id: subId } = targetSub;
 
-    const isSuccess =
-      payment_status === "success" ||
-      payment_status === "settlement" ||
-      payment_status === "paid" ||
-      payment_status === "Success" ||
-      payment_status === "SUCCESS";
+    const isSuccess = String(payment_status).toLowerCase() === "paid";
 
     if (isSuccess) {
       // Determine if targetSub is already activated
       const isTargetAlreadyActivated = targetSub.ended_at !== null && (() => {
         const responseStatus = typeof targetSub.qrisly_response === 'object' && targetSub.qrisly_response !== null
-          ? (targetSub.qrisly_response as any).status
+          ? String((targetSub.qrisly_response as any).status).toLowerCase()
           : null;
-        return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+        return responseStatus === "paid";
       })();
 
       if (!isTargetAlreadyActivated) {
@@ -93,9 +88,9 @@ export async function POST(request: Request) {
         const validActiveSubs = (existingActiveSubs ?? []).filter(sub => {
           if (sub.price === 0) return true; // promo
           const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-            ? (sub.qrisly_response as any).status
+            ? String((sub.qrisly_response as any).status).toLowerCase()
             : null;
-          return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+          return responseStatus === "paid";
         });
 
         let finalStartedAt = new Date();
@@ -168,15 +163,7 @@ export async function POST(request: Request) {
       } else {
         console.log(`Subscription already exists for user ${userId}: ${plan}`);
       }
-    } else if (
-      payment_status === "cancel" ||
-      payment_status === "expire" ||
-      payment_status === "deny" ||
-      payment_status === "failed" ||
-      payment_status === "FAILED" ||
-      payment_status === "expired" ||
-      payment_status === "cancelled"
-    ) {
+    } else if (String(payment_status).toLowerCase() === "expired") {
       const updatedResponse = typeof targetSub.qrisly_response === 'object' && targetSub.qrisly_response !== null
         ? { ...(targetSub.qrisly_response as any), status: payment_status.toLowerCase() }
         : { status: payment_status.toLowerCase() };

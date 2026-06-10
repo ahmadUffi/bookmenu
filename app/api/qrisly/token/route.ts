@@ -40,9 +40,9 @@ export async function POST(request: Request) {
     const hasCompletedSub = (completedSubs ?? []).some(sub => {
       if (sub.price === 0) return true; // Already had free promo
       const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-        ? (sub.qrisly_response as any).status
+        ? String((sub.qrisly_response as any).status).toLowerCase()
         : null;
-      return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+      return responseStatus === "paid";
     });
 
     const isNewUser = !hasCompletedSub;
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
 
       const pendingSub = (existingPendingSub ?? []).find(sub => {
         const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-          ? (sub.qrisly_response as any).status
+          ? String((sub.qrisly_response as any).status).toLowerCase()
           : null;
         return responseStatus === "pending" || !responseStatus;
       });

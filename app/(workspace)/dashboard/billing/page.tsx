@@ -58,9 +58,9 @@ export default async function DashboardBillingPage(
     if (sub.ended_at && new Date(sub.ended_at) <= now) return false;
     if (sub.price === 0) return true;
     const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-      ? (sub.qrisly_response as any).status
+      ? String((sub.qrisly_response as any).status).toLowerCase()
       : null;
-    return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+    return responseStatus === "paid";
   });
 
   // Determine currently running subscription (started_at <= now <= ended_at)
@@ -119,9 +119,9 @@ export default async function DashboardBillingPage(
       status = "Paid";
     } else {
       const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-        ? (sub.qrisly_response as any).status
+        ? String((sub.qrisly_response as any).status).toLowerCase()
         : null;
-      if (["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus)) {
+      if (responseStatus === "paid") {
         status = "Paid";
       } else if (responseStatus === "pending" || !responseStatus) {
         status = "Pending";
@@ -141,9 +141,9 @@ export default async function DashboardBillingPage(
   const isPromoEligible = !(rawHistory ?? []).some(sub => {
     if (sub.price === 0) return true;
     const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-      ? (sub.qrisly_response as any).status
+      ? String((sub.qrisly_response as any).status).toLowerCase()
       : null;
-    return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+    return responseStatus === "paid";
   });
 
   return (

@@ -168,9 +168,9 @@ export async function uploadMenu(formData: FormData) {
   const activeSub = (activeSubs ?? []).find(sub => {
     if (sub.price === 0) return true;
     const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-      ? (sub.qrisly_response as any).status
+      ? String((sub.qrisly_response as any).status).toLowerCase()
       : null;
-    return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+    return responseStatus === "paid";
   });
 
   const plan = activeSub?.plan || "free";
