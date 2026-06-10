@@ -59,6 +59,7 @@ export default function BillingPanel({
     amount: number;
   } | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(false);
+  const [showConfirmPromoModal, setShowConfirmPromoModal] = useState(false);
 
   const totalMenusCount = initialMenus.length;
 
@@ -274,7 +275,13 @@ export default function BillingPanel({
                           </ul>
                         </div>
                         <button
-                          onClick={() => handlePlanCheckout("monthly")}
+                          onClick={() => {
+                            if (isPromoEligible) {
+                              setShowConfirmPromoModal(true);
+                            } else {
+                              handlePlanCheckout("monthly");
+                            }
+                          }}
                           disabled={loading}
                           className="mt-6 w-full rounded-xl py-2.5 text-xs font-semibold border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef] disabled:opacity-50"
                         >
@@ -661,6 +668,82 @@ export default function BillingPanel({
                     className="w-full flex min-h-12 items-center justify-center rounded-2xl border border-[#d9d0c2] bg-white text-sm font-semibold text-[#4d5149] transition hover:bg-[#fbf7ef] disabled:opacity-50 cursor-pointer"
                   >
                     Cancel / Pay Later
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Confirmation Promo Monthly Rp0 Modal */}
+          {showConfirmPromoModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
+              <div className="relative w-full max-w-md overflow-hidden rounded-[2.25rem] border border-[#e4dbce] bg-[#fffdf8] p-6 shadow-2xl transition-all duration-300 animate-scale-up">
+                {/* Modal Header */}
+                <div className="text-center mt-2">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--green-soft)] text-[var(--green)] mb-3">
+                    <Sparkles size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-[var(--charcoal)] tracking-tight">Aktivasi Promo Monthly</h3>
+                  <p className="text-xs text-[#666a61] mt-1.5 px-4">
+                    Anda memenuhi syarat untuk mendapatkan promo langganan Monthly Plan pertama Anda secara gratis!
+                  </p>
+                </div>
+
+                {/* Promo Benefits / Info Box */}
+                <div className="my-6 rounded-2xl border border-[#e4dbce] bg-white p-5 space-y-4 text-xs text-[#555950]">
+                  <div className="flex justify-between items-center pb-2.5 border-b border-[#ece4d8]">
+                    <span className="text-[#777a72]">Nama Paket:</span>
+                    <span className="font-semibold text-[var(--charcoal)]">Monthly Plan (Promo)</span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <span className="text-[#777a72] block font-medium">Manfaat yang Anda dapatkan:</span>
+                    <ul className="space-y-1.5 pl-1">
+                      <li className="flex items-center gap-2">
+                        <Check size={12} className="text-[var(--green)] shrink-0" />
+                        <span>Upload hingga 5 file Menu PDF</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check size={12} className="text-[var(--green)] shrink-0" />
+                        <span>Scan QR Menu tanpa batas (Unlimited)</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check size={12} className="text-[var(--green)] shrink-0" />
+                        <span>Kustomisasi desain QR Code</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2.5 border-t border-[#ece4d8]">
+                    <span className="text-[#777a72] font-semibold">Harga Promo:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400 line-through">Rp9.000,00</span>
+                      <span className="font-bold text-[var(--green-dark)] text-sm">Rp0</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#777a72]">Masa Aktif:</span>
+                    <span className="font-semibold text-[var(--charcoal)]">30 Hari</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="space-y-2.5">
+                  <button
+                    onClick={() => {
+                      setShowConfirmPromoModal(false);
+                      handlePlanCheckout("monthly");
+                    }}
+                    className="w-full flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--green)] text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[var(--green-dark)] shadow-[0_12px_24px_rgba(66,107,79,0.18)] cursor-pointer"
+                  >
+                    Aktifkan Sekarang (Gratis)
+                  </button>
+                  <button
+                    onClick={() => setShowConfirmPromoModal(false)}
+                    className="w-full flex min-h-12 items-center justify-center rounded-2xl border border-[#d9d0c2] bg-white text-sm font-semibold text-[#4d5149] transition hover:bg-[#fbf7ef] cursor-pointer"
+                  >
+                    Batal
                   </button>
                 </div>
               </div>
