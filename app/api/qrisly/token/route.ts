@@ -25,6 +25,67 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid plan type" }, { status: 400 });
     }
 
+    const adminDb = createAdminClient();
+
+    // Check if the user is a new customer (no records in subscriptions table)
+    const { count, error: countError } = await adminDb
+      .from("subscriptions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id);
+
+    if (countError) {
+      console.error("Error checking subscription count:", countError);
+    }
+
+    const isNewUser = !count;
+
+    // Promo for new users: free first monthly plan
+    if (plan === "monthly" && isNewUser) {
+      const startedAt = new Date();
+      const endedAt = new Date();
+      endedAt.setDate(endedAt.getDate() + 30); // 30 Days active period
+
+      const { error: insertError } = await adminDb.from("subscriptions").insert({
+        user_id: user.id,
+        plan: "monthly",
+        price: 0,
+        status: "active",
+        started_at: startedAt.toISOString(),
+        ended_at: endedAt.toISOString(),
+      });
+
+      if (insertError) {
+        console.error("Error creating free monthly subscription:", insertError);
+        return NextResponse.json({ error: "Failed to activate promo plan" }, { status: 500 });
+      }
+
+      // Initialize/reset usage limits
+      const { data: existingUsage } = await adminDb
+        .from("subscription_usages")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingUsage) {
+        await adminDb
+          .from("subscription_usages")
+          .update({ pdf_upload: 0, qr_scan: 0 })
+          .eq("user_id", user.id);
+      } else {
+        await adminDb.from("subscription_usages").insert({
+          user_id: user.id,
+          pdf_upload: 0,
+          qr_scan: 0,
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        activated_free: true,
+        message: "Promo Monthly Plan activated successfully for free!"
+      });
+    }
+
     const price = plan === "monthly" ? 9000 : 99000;
 
     // Convert UUID to base64url to stay within character limits
@@ -44,7 +105,6 @@ export async function POST(request: Request) {
       const mockHistoryId = `mock_hist_${Date.now()}`;
 
       // Insert pending subscription record even in mock mode for consistency
-      const adminDb = createAdminClient();
       await adminDb.from("subscriptions").insert({
         user_id: user.id,
         plan: plan,
@@ -106,7 +166,6 @@ export async function POST(request: Request) {
     const historyId = String(data.history_id || data.id || `hist_${Date.now()}`);
 
     // Insert pending subscription record so that webhook and/or manual status check can find it
-    const adminDb = createAdminClient();
     await adminDb.from("subscriptions").insert({
       user_id: user.id,
       plan: plan,

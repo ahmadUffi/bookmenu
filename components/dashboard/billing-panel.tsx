@@ -34,6 +34,7 @@ type BillingPanelProps = {
   activePlan: "free" | "monthly" | "yearly";
   endedAt: string | null;
   transactions: Transaction[];
+  isPromoEligible?: boolean;
 };
 
 type PlanType = "free" | "monthly" | "yearly";
@@ -44,6 +45,7 @@ export default function BillingPanel({
   activePlan,
   endedAt,
   transactions,
+  isPromoEligible = false,
 }: BillingPanelProps) {
   const [selectedPlan, setSelectedPlan] = useState<PlanType>(activePlan);
   const [notice, setNotice] = useState<string | null>(null);
@@ -116,8 +118,15 @@ export default function BillingPanel({
       }
 
       const data = await res.json();
-      setQrisData(data);
-      setShowQrisModal(true);
+      if (data.activated_free) {
+        setNotice("Congratulations! Your free Monthly Plan promo has been activated. Reloading page...");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        setQrisData(data);
+        setShowQrisModal(true);
+      }
     } catch (err: any) {
       console.error(err);
       setNotice(err.message || "An error occurred during payment processing.");
@@ -226,12 +235,29 @@ export default function BillingPanel({
                       <div
                         className="relative flex flex-col justify-between rounded-2xl border p-5 border-[#e4dbce] bg-[#fffdf8] hover:border-[#cbd5e1]"
                       >
+                        {isPromoEligible && (
+                          <span className="absolute right-4 top-4 rounded-full bg-[var(--green)] px-2.5 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wider">
+                            Promo Rp0
+                          </span>
+                        )}
                         <div>
                           <h3 className="font-semibold text-[var(--charcoal)]">Monthly</h3>
                           <div className="mt-3 flex items-baseline">
-                            <span className="text-2xl font-bold tracking-tight">Rp9.000,00</span>
+                            {isPromoEligible ? (
+                              <>
+                                <span className="text-2xl font-bold tracking-tight text-[var(--green)]">Rp0</span>
+                                <span className="ml-2 text-xs text-gray-400 line-through">Rp9.000,00</span>
+                              </>
+                            ) : (
+                              <span className="text-2xl font-bold tracking-tight">Rp9.000,00</span>
+                            )}
                             <span className="ml-1 text-xs text-[#666a61]">/ 30 Days</span>
                           </div>
+                          {isPromoEligible && (
+                            <p className="mt-1 text-[10px] text-[var(--green-dark)] font-medium">
+                              New user promo: First purchase is FREE!
+                            </p>
+                          )}
                           <ul className="mt-5 space-y-2 text-xs text-[#5f6673]">
                             <li className="flex items-center gap-1.5">
                               <Check size={14} className="text-[var(--green)] shrink-0" />
