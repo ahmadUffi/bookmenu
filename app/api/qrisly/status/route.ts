@@ -59,7 +59,7 @@ export async function GET(request: Request) {
       
       // Determine status from payload
       paymentStatus = String(data.status || data.payment_status || "pending").toLowerCase();
-      isSuccess = paymentStatus === "paid";
+      isSuccess = paymentStatus === "success" || paymentStatus === "paid";
     }
 
     // If payment is successful, update subscription in DB (acting as a fallback/accelerator for webhook)
@@ -106,7 +106,7 @@ export async function GET(request: Request) {
           const responseStatus = typeof targetSub.qrisly_response === 'object' && targetSub.qrisly_response !== null
             ? String((targetSub.qrisly_response as any).status).toLowerCase()
             : null;
-          return responseStatus === "paid";
+          return responseStatus === "success" || responseStatus === "paid";
         })();
 
         if (!isTargetAlreadyActivated) {
@@ -123,7 +123,7 @@ export async function GET(request: Request) {
             const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
               ? String((sub.qrisly_response as any).status).toLowerCase()
               : null;
-            return responseStatus === "paid";
+            return responseStatus === "success" || responseStatus === "paid";
           });
 
           let finalStartedAt = new Date();

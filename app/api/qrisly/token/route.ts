@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
         ? String((sub.qrisly_response as any).status).toLowerCase()
         : null;
-      return responseStatus === "paid";
+      return responseStatus === "success" || responseStatus === "paid";
     });
 
     const isNewUser = !hasCompletedSub;

@@ -9,21 +9,23 @@ export async function POST(request: Request) {
 
     // QRISly webhook payload structure (RajaOngkir QRISly):
     // {
-    //   "event": "payment.expired" | "payment.paid",
-    //   "timestamp": "1781104398",
+    //   "event": "payment.success" | "payment.expired",
+    //   "timestamp": 1781106700,
     //   "data": {
-    //     "history_id": 2953,
+    //     "qris_history_id": 2954,
     //     "qris_id": 261,
-    //     "amount": 99008,
-    //     "status": "expired" | "paid" | "pending",
-    //     "created_at": "2025-01-14T10:30:00Z",
-    //     "expired_at": "2025-01-15T23:59:59Z"
+    //     "amount": 9009,
+    //     "original_amount": 9000,
+    //     "status": "success" | "expired" | "pending",
+    //     "paid_at": "2026-06-10 22:51:40",
+    //     "created_at": "2026-06-10T22:51:14+07:00",
+    //     "expired_at": "2026-06-10T23:06:14+07:00"
     //   }
     // }
 
     const event = body.event;
     const eventData = body.data || {};
-    const historyId = eventData.history_id;
+    const historyId = eventData.qris_history_id || eventData.history_id;
     const amount = eventData.amount; // This is the final unique amount (e.g. 9003)
     const payment_status = eventData.status;
 
@@ -65,7 +67,10 @@ export async function POST(request: Request) {
 
     const { user_id: userId, plan, id: subId } = targetSub;
 
-    const isSuccess = String(payment_status).toLowerCase() === "paid";
+    const isSuccess = (() => {
+      const statusLower = String(payment_status).toLowerCase();
+      return statusLower === "success" || statusLower === "paid";
+    })();
 
     if (isSuccess) {
       // Determine if targetSub is already activated
@@ -73,7 +78,7 @@ export async function POST(request: Request) {
         const responseStatus = typeof targetSub.qrisly_response === 'object' && targetSub.qrisly_response !== null
           ? String((targetSub.qrisly_response as any).status).toLowerCase()
           : null;
-        return responseStatus === "paid";
+        return responseStatus === "success" || responseStatus === "paid";
       })();
 
       if (!isTargetAlreadyActivated) {
@@ -90,7 +95,7 @@ export async function POST(request: Request) {
           const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
             ? String((sub.qrisly_response as any).status).toLowerCase()
             : null;
-          return responseStatus === "paid";
+          return responseStatus === "success" || responseStatus === "paid";
         });
 
         let finalStartedAt = new Date();

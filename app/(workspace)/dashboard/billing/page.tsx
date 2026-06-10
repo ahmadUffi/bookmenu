@@ -60,7 +60,7 @@ export default async function DashboardBillingPage(
     const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
       ? String((sub.qrisly_response as any).status).toLowerCase()
       : null;
-    return responseStatus === "paid";
+    return responseStatus === "success" || responseStatus === "paid";
   });
 
   // Determine currently running subscription (started_at <= now <= ended_at)
@@ -121,7 +121,7 @@ export default async function DashboardBillingPage(
       const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
         ? String((sub.qrisly_response as any).status).toLowerCase()
         : null;
-      if (responseStatus === "paid") {
+      if (responseStatus === "success" || responseStatus === "paid") {
         status = "Paid";
       } else if (responseStatus === "pending" || !responseStatus) {
         status = "Pending";
@@ -143,7 +143,7 @@ export default async function DashboardBillingPage(
     const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
       ? String((sub.qrisly_response as any).status).toLowerCase()
       : null;
-    return responseStatus === "paid";
+    return responseStatus === "success" || responseStatus === "paid";
   });
 
   return (

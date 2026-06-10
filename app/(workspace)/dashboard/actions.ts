@@ -170,7 +170,7 @@ export async function uploadMenu(formData: FormData) {
     const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
       ? String((sub.qrisly_response as any).status).toLowerCase()
       : null;
-    return responseStatus === "paid";
+    return responseStatus === "success" || responseStatus === "paid";
   });
 
   const plan = activeSub?.plan || "free";

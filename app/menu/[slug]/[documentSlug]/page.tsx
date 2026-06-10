@@ -39,7 +39,7 @@ export default async function PublicDocumentPage(
       const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
         ? String((sub.qrisly_response as any).status).toLowerCase()
         : null;
-      return responseStatus === "paid";
+      return responseStatus === "success" || responseStatus === "paid";
     });
     if (activeSub) {
       plan = activeSub.plan;
