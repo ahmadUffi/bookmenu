@@ -103,6 +103,8 @@ export default async function DashboardBillingPage(
     };
   });
 
+  const isPromoEligible = !rawHistory || rawHistory.length === 0;
+
   return (
     <BillingPanel
       initialBusinessName={restaurant.restaurant_name}
@@ -110,6 +112,7 @@ export default async function DashboardBillingPage(
       activePlan={activePlan}
       endedAt={endedAt}
       transactions={transactions}
+      isPromoEligible={isPromoEligible}
     />
   );
 }
