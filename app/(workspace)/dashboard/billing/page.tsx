@@ -46,23 +46,22 @@ export default async function DashboardBillingPage(
   const menus = mapRestaurantMenus([restaurant]);
 
   const nowStr = new Date().toISOString();
-  // 1. Fetch active subscription info from Supabase
-  const { data: activeSub, error } = await supabase
-    .from("subscriptions")
-    .select("plan, status, ended_at")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .gt("ended_at", "now()")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  // 2. Fetch transaction history log
+  // 1. Fetch all subscriptions from Supabase to find active ones and history
   const { data: rawHistory } = await supabase
     .from("subscriptions")
-    .select("id, created_at, plan, price, status")
+    .select("id, created_at, plan, price, ended_at, qrisly_response")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  // Find the active subscription: ended_at > now() and paid/promo
+  const activeSub = (rawHistory ?? []).find(sub => {
+    if (sub.ended_at && new Date(sub.ended_at) <= new Date()) return false;
+    if (sub.price === 0) return true;
+    const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+      ? (sub.qrisly_response as any).status
+      : null;
+    return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+  });
 
   const activePlan = activeSub ? (activeSub.plan as "monthly" | "yearly") : "free";
   const endedAt = activeSub?.ended_at
@@ -90,8 +89,18 @@ export default async function DashboardBillingPage(
     const invoiceNo = `INV-${year}-${sub.id.substring(0, 8).toUpperCase()}`;
 
     let status: "Paid" | "Pending" | "Failed" = "Failed";
-    if (sub.status === "active") status = "Paid";
-    else if (sub.status === "pending") status = "Pending";
+    if (sub.price === 0) {
+      status = "Paid";
+    } else {
+      const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+        ? (sub.qrisly_response as any).status
+        : null;
+      if (["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus)) {
+        status = "Paid";
+      } else if (responseStatus === "pending" || !responseStatus) {
+        status = "Pending";
+      }
+    }
 
     return {
       id: sub.id,

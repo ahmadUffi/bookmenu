@@ -97,34 +97,48 @@ export async function GET(request: Request) {
         const price = plan === "monthly" ? 9000 : 99000;
 
         // Check if subscription already exists to avoid duplication
-        const { data: existingSub } = await adminDb
+        const { data: activeSubs } = await adminDb
           .from("subscriptions")
-          .select("id")
+          .select("id, price, qrisly_response")
           .eq("user_id", userId)
           .eq("plan", plan)
-          .eq("status", "active")
-          .gt("ended_at", startedAt.toISOString())
-          .limit(1)
-          .maybeSingle();
+          .gt("ended_at", startedAt.toISOString());
+
+        const existingSub = (activeSubs ?? []).find(sub => {
+          if (sub.price === 0) return true;
+          const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+            ? (sub.qrisly_response as any).status
+            : null;
+          return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+        });
 
         if (!existingSub) {
           // Look for a pending subscription first
-          const { data: pendingSub } = await adminDb
+          const { data: userSubs } = await adminDb
             .from("subscriptions")
-            .select("id, price")
+            .select("id, price, qrisly_response")
             .eq("user_id", userId)
             .eq("plan", plan)
-            .eq("status", "pending")
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
+            .is("ended_at", null)
+            .order("created_at", { ascending: false });
+
+          const pendingSub = (userSubs ?? []).find(sub => {
+            const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+              ? (sub.qrisly_response as any).status
+              : null;
+            return responseStatus === "pending" || !responseStatus;
+          });
 
           if (pendingSub) {
             // Update pending to active
+            const updatedResponse = typeof pendingSub.qrisly_response === 'object' && pendingSub.qrisly_response !== null
+              ? { ...(pendingSub.qrisly_response as any), status: paymentStatus }
+              : { status: paymentStatus };
+
             await adminDb
               .from("subscriptions")
               .update({
-                status: "active",
+                qrisly_response: updatedResponse,
                 started_at: startedAt.toISOString(),
                 ended_at: endedAt.toISOString(),
               })
@@ -135,7 +149,7 @@ export async function GET(request: Request) {
               user_id: userId,
               plan: plan,
               price: price,
-              status: "active",
+              qrisly_response: { status: paymentStatus },
               started_at: startedAt.toISOString(),
               ended_at: endedAt.toISOString(),
             });
@@ -162,12 +176,24 @@ export async function GET(request: Request) {
           }
 
           // Deactivate old active plans
-          await adminDb
+          const { data: oldSubs } = await adminDb
             .from("subscriptions")
-            .update({ status: "inactive" })
+            .select("id, qrisly_response")
             .eq("user_id", userId)
-            .eq("status", "active")
             .not("started_at", "eq", startedAt.toISOString());
+
+          for (const oldSub of (oldSubs ?? [])) {
+            const responseStatus = typeof oldSub.qrisly_response === 'object' && oldSub.qrisly_response !== null
+              ? (oldSub.qrisly_response as any).status
+              : null;
+            if (["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus)) {
+              const updatedOldResponse = { ...(oldSub.qrisly_response as any), status: "inactive" };
+              await adminDb
+                .from("subscriptions")
+                .update({ qrisly_response: updatedOldResponse })
+                .eq("id", oldSub.id);
+            }
+          }
         }
       }
     }

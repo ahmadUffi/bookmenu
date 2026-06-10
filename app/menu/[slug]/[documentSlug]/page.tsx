@@ -27,15 +27,20 @@ export default async function PublicDocumentPage(
   try {
     const adminDb = createAdminClient();
     const nowStr = new Date().toISOString();
-    const { data: activeSub } = await adminDb
+    const { data: activeSubs } = await adminDb
       .from("subscriptions")
-      .select("plan")
+      .select("plan, price, qrisly_response")
       .eq("user_id", restaurant.owner_id)
-      .eq("status", "active")
       .gt("ended_at", nowStr)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("created_at", { ascending: false });
+
+    const activeSub = (activeSubs ?? []).find(sub => {
+      if (sub.price === 0) return true;
+      const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+        ? (sub.qrisly_response as any).status
+        : null;
+      return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+    });
     if (activeSub) {
       plan = activeSub.plan;
     }

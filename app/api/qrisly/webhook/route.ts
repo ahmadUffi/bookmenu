@@ -34,14 +34,19 @@ export async function POST(request: Request) {
     const supabase = createAdminClient();
 
     // Look up the pending subscription by the unique amount
-    const { data: pendingSub } = await supabase
+    const { data: amountSubs } = await supabase
       .from("subscriptions")
-      .select("id, user_id, plan")
-      .eq("status", "pending")
+      .select("id, user_id, plan, qrisly_response")
       .eq("price", amount)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .is("ended_at", null)
+      .order("created_at", { ascending: false });
+
+    const pendingSub = (amountSubs ?? []).find(sub => {
+      const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+        ? (sub.qrisly_response as any).status
+        : null;
+      return responseStatus === "pending" || !responseStatus;
+    });
 
     if (!pendingSub) {
       console.log(`No pending subscription found for amount: ${amount}`);
@@ -67,22 +72,31 @@ export async function POST(request: Request) {
       }
 
       // Check if subscription already exists to avoid duplication
-      const { data: existingSub } = await supabase
+      const { data: activeSubs } = await supabase
         .from("subscriptions")
-        .select("id")
+        .select("id, price, qrisly_response")
         .eq("user_id", userId)
         .eq("plan", plan)
-        .eq("status", "active")
-        .gt("ended_at", startedAt.toISOString())
-        .limit(1)
-        .maybeSingle();
+        .gt("ended_at", startedAt.toISOString());
+
+      const existingSub = (activeSubs ?? []).find(sub => {
+        if (sub.price === 0) return true;
+        const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+          ? (sub.qrisly_response as any).status
+          : null;
+        return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+      });
 
       if (!existingSub) {
+        const updatedResponse = typeof pendingSub.qrisly_response === 'object' && pendingSub.qrisly_response !== null
+          ? { ...(pendingSub.qrisly_response as any), status: payment_status }
+          : { status: payment_status };
+
         // 1. Update the pending subscription record to active
         const { error: subError } = await supabase
           .from("subscriptions")
           .update({
-            status: "active",
+            qrisly_response: updatedResponse,
             started_at: startedAt.toISOString(),
             ended_at: endedAt.toISOString(),
           })
@@ -124,12 +138,24 @@ export async function POST(request: Request) {
         }
 
         // Mark other subscriptions as canceled/inactive if they exist
-        await supabase
+        const { data: activeSubsToDeactivate } = await supabase
           .from("subscriptions")
-          .update({ status: "inactive" })
+          .select("id, qrisly_response")
           .eq("user_id", userId)
-          .eq("status", "active")
           .not("id", "eq", subId);
+
+        for (const oldSub of (activeSubsToDeactivate ?? [])) {
+          const responseStatus = typeof oldSub.qrisly_response === 'object' && oldSub.qrisly_response !== null
+            ? (oldSub.qrisly_response as any).status
+            : null;
+          if (["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus)) {
+            const updatedOldResponse = { ...(oldSub.qrisly_response as any), status: "inactive" };
+            await supabase
+              .from("subscriptions")
+              .update({ qrisly_response: updatedOldResponse })
+              .eq("id", oldSub.id);
+          }
+        }
 
         console.log(`Successfully activated subscription for user ${userId}: ${plan}`);
       } else {
@@ -144,11 +170,15 @@ export async function POST(request: Request) {
       payment_status === "expired" ||
       payment_status === "cancelled"
     ) {
+      const updatedResponse = typeof pendingSub.qrisly_response === 'object' && pendingSub.qrisly_response !== null
+        ? { ...(pendingSub.qrisly_response as any), status: payment_status.toLowerCase() }
+        : { status: payment_status.toLowerCase() };
+
       // Update pending subscription record to failed/expired/etc.
       await supabase
         .from("subscriptions")
         .update({
-          status: payment_status.toLowerCase(),
+          qrisly_response: updatedResponse,
           ended_at: new Date().toISOString(),
         })
         .eq("id", subId);

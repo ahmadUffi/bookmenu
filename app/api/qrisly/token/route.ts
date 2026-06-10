@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         user_id: user.id,
         plan: "monthly",
         price: 0,
-        status: "active",
+        qrisly_response: { status: "success" },
         started_at: startedAt.toISOString(),
         ended_at: endedAt.toISOString(),
       });
@@ -109,7 +109,15 @@ export async function POST(request: Request) {
         user_id: user.id,
         plan: plan,
         price: price,
-        status: "pending",
+        qrisly_response: {
+          status: "pending",
+          qr_url: mockQrUrl,
+          qr_content: mockQrContent,
+          history_id: mockHistoryId,
+          order_id: orderId,
+          amount: price,
+          is_mock: true
+        },
         started_at: new Date().toISOString(),
         ended_at: null,
       });
@@ -170,7 +178,14 @@ export async function POST(request: Request) {
       user_id: user.id,
       plan: plan,
       price: finalAmount,
-      status: "pending",
+      qrisly_response: {
+        status: "pending",
+        qr_url: qrUrl,
+        qr_content: qrContent,
+        history_id: historyId,
+        order_id: orderId,
+        amount: finalAmount
+      },
       started_at: new Date().toISOString(),
       ended_at: null,
     });
