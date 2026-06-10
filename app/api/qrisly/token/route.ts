@@ -27,17 +27,52 @@ export async function POST(request: Request) {
 
     const adminDb = createAdminClient();
 
-    // Check if the user is a new customer (no records in subscriptions table)
-    const { count, error: countError } = await adminDb
+    // Check if the user has any successfully activated subscriptions (paid or promo active)
+    const { data: completedSubs, error: countError } = await adminDb
       .from("subscriptions")
-      .select("id", { count: "exact", head: true })
+      .select("id, price, qrisly_response")
       .eq("user_id", user.id);
 
     if (countError) {
       console.error("Error checking subscription count:", countError);
     }
 
-    const isNewUser = !count;
+    const hasCompletedSub = (completedSubs ?? []).some(sub => {
+      if (sub.price === 0) return true; // Already had free promo
+      const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+        ? (sub.qrisly_response as any).status
+        : null;
+      return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+    });
+
+    const isNewUser = !hasCompletedSub;
+
+    // If it's a paid plan (or monthly and not new user), check if there is already an existing pending transaction
+    if (!(plan === "monthly" && isNewUser)) {
+      const { data: existingPendingSub, error: pendingError } = await adminDb
+        .from("subscriptions")
+        .select("id, price, qrisly_response")
+        .eq("user_id", user.id)
+        .eq("plan", plan)
+        .is("ended_at", null)
+        .order("created_at", { ascending: false });
+
+      if (pendingError) {
+        console.error("Error checking pending subscription:", pendingError);
+      }
+
+      const pendingSub = (existingPendingSub ?? []).find(sub => {
+        const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+          ? (sub.qrisly_response as any).status
+          : null;
+        return responseStatus === "pending" || !responseStatus;
+      });
+
+      if (pendingSub && pendingSub.qrisly_response) {
+        console.log(`Reusing existing pending subscription for user ${user.id}, plan ${plan}`);
+        return NextResponse.json(pendingSub.qrisly_response);
+      }
+    }
 
     // Promo for new users: free first monthly plan
     if (plan === "monthly" && isNewUser) {

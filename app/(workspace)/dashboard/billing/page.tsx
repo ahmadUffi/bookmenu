@@ -112,7 +112,13 @@ export default async function DashboardBillingPage(
     };
   });
 
-  const isPromoEligible = !rawHistory || rawHistory.length === 0;
+  const isPromoEligible = !(rawHistory ?? []).some(sub => {
+    if (sub.price === 0) return true;
+    const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+      ? (sub.qrisly_response as any).status
+      : null;
+    return ["success", "settlement", "paid", "Success", "SUCCESS"].includes(responseStatus);
+  });
 
   return (
     <BillingPanel
