@@ -7,17 +7,17 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log("Webhook body:", body);
 
-    // QRISly webhook payload structure:
+    // QRISly webhook payload structure (RajaOngkir QRISly):
     // {
-    //   "event": "payment.success",
-    //   "timestamp": "2025-01-14T10:35:22Z",
+    //   "event": "payment.expired" | "payment.paid",
+    //   "timestamp": "1781104398",
     //   "data": {
-    //     "history_id": "8c5b8e8d-7b22-3e31-7a0e-0d5a2d1d6c09",
-    //     "qris_id": "9d6c9f9e-8c33-4f42-8b1f-0e6a3e2e7d10",
-    //     "amount": 100001,
-    //     "original_amount": 100000,
-    //     "status": "paid",
-    //     ...
+    //     "history_id": 2953,
+    //     "qris_id": 261,
+    //     "amount": 99008,
+    //     "status": "expired" | "paid" | "pending",
+    //     "created_at": "2025-01-14T10:30:00Z",
+    //     "expired_at": "2025-01-15T23:59:59Z"
     //   }
     // }
 
