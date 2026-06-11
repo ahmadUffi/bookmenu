@@ -68,6 +68,16 @@ export default function BillingPanel({
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [showConfirmPromoModal, setShowConfirmPromoModal] = useState(false);
 
+  // Pagination states and values
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+  const validCurrentPage = Math.max(1, Math.min(currentPage, totalPages || 1));
+  const paginatedTransactions = transactions.slice(
+    (validCurrentPage - 1) * itemsPerPage,
+    validCurrentPage * itemsPerPage,
+  );
+
   const totalMenusCount = initialMenus.length;
 
   const sortedChain = [...(activeChain ?? [])].sort(
@@ -142,9 +152,13 @@ export default function BillingPanel({
         setQrisData(data);
         setShowQrisModal(true);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setNotice(err.message || "An error occurred during payment processing.");
+      const errMsg =
+        err instanceof Error
+          ? err.message
+          : "An error occurred during payment processing.";
+      setNotice(errMsg);
     } finally {
       setLoading(false);
     }
@@ -179,8 +193,8 @@ export default function BillingPanel({
     }
   };
 
-  const handleDownloadInvoice = (invoiceNo: string) => {
-    alert(`Downloading invoice ${invoiceNo} as PDF (Simulated).`);
+  const handleDownloadInvoice = (id: string) => {
+    window.open(`/invoice/${id}`, "_blank");
   };
 
   return (
@@ -558,13 +572,35 @@ export default function BillingPanel({
 
             {/* History Table */}
             <div className="rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] shadow-[var(--shadow-card)] overflow-hidden">
-              <div className="border-b border-[#e4dbce] p-6">
-                <h2 className="text-xl font-semibold tracking-tight">
-                  Transaction History
-                </h2>
-                <p className="text-sm text-[#666a61]">
-                  Review recent payments and download invoices for accounting.
-                </p>
+              <div className="border-b border-[#e4dbce] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold tracking-tight">
+                    Transaction History
+                  </h2>
+                  <p className="text-sm text-[#666a61] mt-1">
+                    Review recent payments and download invoices for accounting.
+                  </p>
+                </div>
+                {transactions.length > 0 && (
+                  <div className="flex items-center gap-2 text-sm shrink-0">
+                    <span className="text-xs font-semibold text-[#666a61]">
+                      Tampilkan:
+                    </span>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="rounded-lg border border-[#d9d0c2] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#4d5149] shadow-sm outline-none focus:border-[var(--green)] focus:ring-1 focus:ring-[var(--green)]/20 transition cursor-pointer"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
               {transactions.length === 0 ? (
@@ -596,7 +632,7 @@ export default function BillingPanel({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#ece4d8] text-[#4d5149]">
-                        {transactions.map((tx) => (
+                        {paginatedTransactions.map((tx) => (
                           <tr
                             key={tx.id}
                             className="transition hover:bg-[#fbf7ef]/50"
@@ -626,15 +662,19 @@ export default function BillingPanel({
                               </span>
                             </td>
                             <td className="whitespace-nowrap px-6 py-4 text-right">
-                              <button
-                                onClick={() =>
-                                  handleDownloadInvoice(tx.invoiceNo)
-                                }
-                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d9d0c2] bg-white text-[#4d5149] transition hover:-translate-y-0.5 hover:bg-[#fbf7ef] hover:shadow-xs"
-                                title="Download Invoice"
-                              >
-                                <Download size={14} />
-                              </button>
+                              {tx.status === "Paid" ? (
+                                <button
+                                  onClick={() => handleDownloadInvoice(tx.id)}
+                                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#d9d0c2] bg-white text-[#4d5149] transition hover:-translate-y-0.5 hover:bg-[#fbf7ef] hover:shadow-xs"
+                                  title="Lihat Invoice"
+                                >
+                                  <Download size={14} />
+                                </button>
+                              ) : (
+                                <span className="text-xs text-gray-400 font-medium select-none pr-3">
+                                  -
+                                </span>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -642,12 +682,12 @@ export default function BillingPanel({
                     </table>
                   </div>
 
-                  {/* Mobile View (Horizontal Slide/Carousel of Cards) */}
-                  <div className="md:hidden flex gap-4 overflow-x-auto pb-6 pt-2 px-4 snap-x snap-mandatory bg-white scroll-smooth">
-                    {transactions.map((tx) => (
+                  {/* Mobile View (Vertical List of Paginated Cards) */}
+                  <div className="md:hidden flex flex-col gap-4 pb-6 pt-2 px-4 bg-white">
+                    {paginatedTransactions.map((tx) => (
                       <div
                         key={tx.id}
-                        className="min-w-[260px] sm:min-w-[300px] snap-center rounded-2xl border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-xs space-y-4 flex flex-col justify-between"
+                        className="rounded-2xl border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-xs space-y-4 flex flex-col justify-between"
                       >
                         <div className="flex justify-between items-start gap-2">
                           <div>
@@ -689,16 +729,114 @@ export default function BillingPanel({
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => handleDownloadInvoice(tx.invoiceNo)}
-                          className="mt-2 flex w-full h-10 items-center justify-center gap-2 rounded-xl border border-[#d9d0c2] bg-white text-xs font-semibold text-[#4d5149] transition hover:bg-[#fbf7ef] active:scale-95"
-                        >
-                          <Download size={14} />
-                          Download Invoice
-                        </button>
+                        {tx.status === "Paid" && (
+                          <button
+                            onClick={() => handleDownloadInvoice(tx.id)}
+                            className="mt-2 flex w-full h-10 items-center justify-center gap-2 rounded-xl border border-[#d9d0c2] bg-white text-xs font-semibold text-[#4d5149] transition hover:bg-[#fbf7ef] active:scale-95 cursor-pointer"
+                          >
+                            <Download size={14} />
+                            Lihat Invoice
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t border-[#e4dbce] bg-white px-4 py-4 sm:px-6">
+                      <div className="flex flex-1 justify-between sm:hidden w-full">
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) => Math.max(prev - 1, 1))
+                          }
+                          disabled={validCurrentPage === 1}
+                          className="relative inline-flex items-center rounded-xl border border-[#d9d0c2] bg-white px-4 py-2 text-xs font-semibold text-[#4d5149] transition hover:bg-[#fbf7ef] disabled:opacity-40 disabled:hover:bg-white cursor-pointer select-none"
+                        >
+                          Sebelumnya
+                        </button>
+                        <span className="text-xs text-[#666a61] self-center font-medium">
+                          Halaman {validCurrentPage} dari {totalPages}
+                        </span>
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) =>
+                              Math.min(prev + 1, totalPages),
+                            )
+                          }
+                          disabled={validCurrentPage === totalPages}
+                          className="relative inline-flex items-center rounded-xl border border-[#d9d0c2] bg-white px-4 py-2 text-xs font-semibold text-[#4d5149] transition hover:bg-[#fbf7ef] disabled:opacity-40 disabled:hover:bg-white cursor-pointer select-none"
+                        >
+                          Selanjutnya
+                        </button>
+                      </div>
+                      <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between w-full">
+                        <div>
+                          <p className="text-xs text-[#666a61]">
+                            Menampilkan{" "}
+                            <span className="font-semibold">
+                              {(validCurrentPage - 1) * itemsPerPage + 1}
+                            </span>{" "}
+                            sampai{" "}
+                            <span className="font-semibold">
+                              {Math.min(
+                                validCurrentPage * itemsPerPage,
+                                transactions.length,
+                              )}
+                            </span>{" "}
+                            dari{" "}
+                            <span className="font-semibold">
+                              {transactions.length}
+                            </span>{" "}
+                            transaksi
+                          </p>
+                        </div>
+                        <div>
+                          <nav
+                            className="isolate inline-flex -space-x-px rounded-xl shadow-xs gap-1"
+                            aria-label="Pagination"
+                          >
+                            <button
+                              onClick={() =>
+                                setCurrentPage((prev) => Math.max(prev - 1, 1))
+                              }
+                              disabled={validCurrentPage === 1}
+                              className="relative inline-flex items-center rounded-lg border border-[#d9d0c2] bg-white px-3 py-2 text-xs font-semibold text-[#4d5149] transition hover:bg-[#fbf7ef] disabled:opacity-40 disabled:hover:bg-white cursor-pointer select-none"
+                            >
+                              Sebelumnya
+                            </button>
+                            {Array.from(
+                              { length: totalPages },
+                              (_, i) => i + 1,
+                            ).map((page) => (
+                              <button
+                                key={page}
+                                onClick={() => setCurrentPage(page)}
+                                className={`relative inline-flex items-center rounded-lg px-3 py-2 text-xs font-semibold transition cursor-pointer select-none ${
+                                  page === validCurrentPage
+                                    ? "bg-[var(--green)] text-white"
+                                    : "border border-[#d9d0c2] bg-white text-[#4d5149] hover:bg-[#fbf7ef]"
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            ))}
+                            <button
+                              onClick={() =>
+                                setCurrentPage((prev) =>
+                                  Math.min(prev + 1, totalPages),
+                                )
+                              }
+                              disabled={validCurrentPage === totalPages}
+                              className="relative inline-flex items-center rounded-lg border border-[#d9d0c2] bg-white px-3 py-2 text-xs font-semibold text-[#4d5149] transition hover:bg-[#fbf7ef] disabled:opacity-40 disabled:hover:bg-white cursor-pointer select-none"
+                            >
+                              Selanjutnya
+                            </button>
+                          </nav>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
