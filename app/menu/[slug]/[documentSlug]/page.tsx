@@ -5,7 +5,7 @@ import type { MenuRecord } from "@/lib/menu-types";
 import { getPublicRestaurant } from "@/lib/restaurant-documents";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BookOpen, ExternalLink } from "lucide-react";
+import { BookOpen, ExternalLink, AlertCircle } from "lucide-react";
 
 export default async function PublicDocumentPage(
   props: PageProps<"/menu/[slug]/[documentSlug]">,
@@ -24,6 +24,9 @@ export default async function PublicDocumentPage(
   }
 
   let plan = "free";
+  let isScanLimitExceeded = false;
+  let resetDateStr = null;
+
   try {
     const adminDb = createAdminClient();
     const nowStr = new Date().toISOString();
@@ -37,15 +40,62 @@ export default async function PublicDocumentPage(
     const activeSub = (activeSubs ?? []).find(sub => {
       if (sub.price === 0) return true;
       const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-        ? String((sub.qrisly_response as any).status).toLowerCase()
+        ? String((sub.qrisly_response as { status?: string }).status).toLowerCase()
         : null;
       return responseStatus === "success" || responseStatus === "paid";
     });
     if (activeSub) {
       plan = activeSub.plan;
     }
+
+    // Record the scan event and check limits
+    const { data: scanResult, error: scanError } = await adminDb.rpc("track_and_increment_scan", {
+      owner_uuid: restaurant.owner_id,
+      is_free_plan: plan === "free",
+    });
+
+    if (scanError) {
+      console.error("Error tracking scan:", scanError);
+    } else if (scanResult && scanResult.length > 0) {
+      isScanLimitExceeded = !!scanResult[0].res_is_exceeded;
+      resetDateStr = scanResult[0].res_last_reset;
+    }
   } catch (err) {
-    console.error("Error checking subscription status:", err);
+    console.error("Error checking subscription status and scans:", err);
+  }
+
+  if (isScanLimitExceeded) {
+    const nextResetDate = new Date(new Date(resetDateStr || new Date()).getTime() + 30 * 24 * 60 * 60 * 1000);
+    const formattedResetDate = nextResetDate.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    return (
+      <main className="flex h-[100dvh] items-center justify-center bg-[#082f49] p-4 text-white">
+        <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0c4a6e] p-8 text-center shadow-2xl">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-400 mb-6">
+            <AlertCircle size={32} />
+          </div>
+          <h2 className="text-2xl font-bold tracking-tight mb-3">
+            Batas Scan Tercapai
+          </h2>
+          <p className="text-sm text-sky-200/80 leading-relaxed mb-6">
+            Menu QR ini telah mencapai batas maksimal 1.000 scan untuk paket Free. 
+            Jika Anda adalah pemilik restoran, silakan masuk ke dashboard dan upgrade paket Anda untuk membuka scan tanpa batas.
+          </p>
+          <div className="border-t border-sky-800 pt-6">
+            <p className="text-xs text-sky-300 font-medium">
+              Akan di-reset otomatis pada:
+            </p>
+            <p className="text-sm font-semibold text-white mt-1">
+              {formattedResetDate}
+            </p>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   const limit = plan === "free" ? 1 : 5;
