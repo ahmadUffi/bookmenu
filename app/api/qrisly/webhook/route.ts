@@ -7,23 +7,25 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log("Webhook body:", body);
 
-    // QRISly webhook payload structure:
+    // QRISly webhook payload structure (RajaOngkir QRISly):
     // {
-    //   "event": "payment.success",
-    //   "timestamp": "2025-01-14T10:35:22Z",
+    //   "event": "payment.success" | "payment.expired",
+    //   "timestamp": 1781106700,
     //   "data": {
-    //     "history_id": "8c5b8e8d-7b22-3e31-7a0e-0d5a2d1d6c09",
-    //     "qris_id": "9d6c9f9e-8c33-4f42-8b1f-0e6a3e2e7d10",
-    //     "amount": 100001,
-    //     "original_amount": 100000,
-    //     "status": "paid",
-    //     ...
+    //     "qris_history_id": 2954,
+    //     "qris_id": 261,
+    //     "amount": 9009,
+    //     "original_amount": 9000,
+    //     "status": "success" | "expired" | "pending",
+    //     "paid_at": "2026-06-10 22:51:40",
+    //     "created_at": "2026-06-10T22:51:14+07:00",
+    //     "expired_at": "2026-06-10T23:06:14+07:00"
     //   }
     // }
 
     const event = body.event;
     const eventData = body.data || {};
-    const historyId = eventData.history_id;
+    const historyId = eventData.qris_history_id || eventData.history_id;
     const amount = eventData.amount; // This is the final unique amount (e.g. 9003)
     const payment_status = eventData.status;
 
@@ -33,58 +35,97 @@ export async function POST(request: Request) {
 
     const supabase = createAdminClient();
 
-    // Look up the pending subscription by the unique amount
-    const { data: pendingSub } = await supabase
+    // Look up all subscriptions for this unique amount
+    const { data: amountSubs } = await supabase
       .from("subscriptions")
-      .select("id, user_id, plan")
-      .eq("status", "pending")
-      .eq("price", amount)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .select("id, user_id, plan, qrisly_response, ended_at")
+      .eq("price", amount);
 
-    if (!pendingSub) {
-      console.log(`No pending subscription found for amount: ${amount}`);
+    // Find the one matching history_id
+    let targetSub = (amountSubs ?? []).find(sub => {
+      const subHistoryId = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+        ? String((sub.qrisly_response as any).history_id)
+        : null;
+      return subHistoryId === String(historyId);
+    });
+
+    // Fallback: find any pending one for this amount
+    if (!targetSub) {
+      targetSub = (amountSubs ?? []).find(sub => {
+        if (sub.ended_at !== null) return false;
+        const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+          ? (sub.qrisly_response as any).status
+          : null;
+        return responseStatus === "pending" || !responseStatus;
+      });
+    }
+
+    if (!targetSub) {
+      console.log(`No pending subscription found for amount: ${amount} and historyId: ${historyId}`);
       return NextResponse.json({ success: true, message: "No pending subscription found" });
     }
 
-    const { user_id: userId, plan, id: subId } = pendingSub;
+    const { user_id: userId, plan, id: subId } = targetSub;
 
-    const isSuccess =
-      payment_status === "success" ||
-      payment_status === "settlement" ||
-      payment_status === "paid" ||
-      payment_status === "Success" ||
-      payment_status === "SUCCESS";
+    const isSuccess = (() => {
+      const statusLower = String(payment_status).toLowerCase();
+      return statusLower === "success" || statusLower === "paid";
+    })();
 
     if (isSuccess) {
-      const startedAt = new Date();
-      const endedAt = new Date();
-      if (plan === "monthly") {
-        endedAt.setDate(endedAt.getDate() + 30);
-      } else if (plan === "yearly") {
-        endedAt.setDate(endedAt.getDate() + 365);
-      }
+      // Determine if targetSub is already activated
+      const isTargetAlreadyActivated = targetSub.ended_at !== null && (() => {
+        const responseStatus = typeof targetSub.qrisly_response === 'object' && targetSub.qrisly_response !== null
+          ? String((targetSub.qrisly_response as any).status).toLowerCase()
+          : null;
+        return responseStatus === "success" || responseStatus === "paid";
+      })();
 
-      // Check if subscription already exists to avoid duplication
-      const { data: existingSub } = await supabase
-        .from("subscriptions")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("plan", plan)
-        .eq("status", "active")
-        .gt("ended_at", startedAt.toISOString())
-        .limit(1)
-        .maybeSingle();
+      if (!isTargetAlreadyActivated) {
+        // Calculate startedAt and endedAt based on maximum ended_at of existing active plans
+        const nowStr = new Date().toISOString();
+        const { data: existingActiveSubs } = await supabase
+          .from("subscriptions")
+          .select("ended_at, price, qrisly_response")
+          .eq("user_id", userId)
+          .gt("ended_at", nowStr);
 
-      if (!existingSub) {
+        const validActiveSubs = (existingActiveSubs ?? []).filter(sub => {
+          if (sub.price === 0) return true; // promo
+          const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+            ? String((sub.qrisly_response as any).status).toLowerCase()
+            : null;
+          return responseStatus === "success" || responseStatus === "paid";
+        });
+
+        let finalStartedAt = new Date();
+        if (validActiveSubs.length > 0) {
+          const endDates = validActiveSubs
+            .map(sub => sub.ended_at ? new Date(sub.ended_at).getTime() : 0)
+            .filter(time => time > 0);
+          if (endDates.length > 0) {
+            finalStartedAt = new Date(Math.max(...endDates));
+          }
+        }
+
+        const finalEndedAt = new Date(finalStartedAt);
+        if (plan === "monthly") {
+          finalEndedAt.setDate(finalEndedAt.getDate() + 30);
+        } else if (plan === "yearly") {
+          finalEndedAt.setDate(finalEndedAt.getDate() + 365);
+        }
+
+        const updatedResponse = typeof targetSub.qrisly_response === 'object' && targetSub.qrisly_response !== null
+          ? { ...(targetSub.qrisly_response as any), status: payment_status }
+          : { status: payment_status };
+
         // 1. Update the pending subscription record to active
         const { error: subError } = await supabase
           .from("subscriptions")
           .update({
-            status: "active",
-            started_at: startedAt.toISOString(),
-            ended_at: endedAt.toISOString(),
+            qrisly_response: updatedResponse,
+            started_at: finalStartedAt.toISOString(),
+            ended_at: finalEndedAt.toISOString(),
           })
           .eq("id", subId);
 
@@ -123,32 +164,20 @@ export async function POST(request: Request) {
           });
         }
 
-        // Mark other subscriptions as canceled/inactive if they exist
-        await supabase
-          .from("subscriptions")
-          .update({ status: "inactive" })
-          .eq("user_id", userId)
-          .eq("status", "active")
-          .not("id", "eq", subId);
-
         console.log(`Successfully activated subscription for user ${userId}: ${plan}`);
       } else {
         console.log(`Subscription already exists for user ${userId}: ${plan}`);
       }
-    } else if (
-      payment_status === "cancel" ||
-      payment_status === "expire" ||
-      payment_status === "deny" ||
-      payment_status === "failed" ||
-      payment_status === "FAILED" ||
-      payment_status === "expired" ||
-      payment_status === "cancelled"
-    ) {
+    } else if (String(payment_status).toLowerCase() === "expired") {
+      const updatedResponse = typeof targetSub.qrisly_response === 'object' && targetSub.qrisly_response !== null
+        ? { ...(targetSub.qrisly_response as any), status: payment_status.toLowerCase() }
+        : { status: payment_status.toLowerCase() };
+
       // Update pending subscription record to failed/expired/etc.
       await supabase
         .from("subscriptions")
         .update({
-          status: payment_status.toLowerCase(),
+          qrisly_response: updatedResponse,
           ended_at: new Date().toISOString(),
         })
         .eq("id", subId);

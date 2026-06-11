@@ -25,6 +25,121 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid plan type" }, { status: 400 });
     }
 
+    const adminDb = createAdminClient();
+
+    // Check if the user has any successfully activated subscriptions (paid or promo active)
+    const { data: completedSubs, error: countError } = await adminDb
+      .from("subscriptions")
+      .select("id, price, qrisly_response")
+      .eq("user_id", user.id);
+
+    if (countError) {
+      console.error("Error checking subscription count:", countError);
+    }
+
+    const hasCompletedSub = (completedSubs ?? []).some(sub => {
+      if (sub.price === 0) return true; // Already had free promo
+      const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+        ? String((sub.qrisly_response as any).status).toLowerCase()
+        : null;
+      return responseStatus === "success" || responseStatus === "paid";
+    });
+
+    const isNewUser = !hasCompletedSub;
+
+    // If it's a paid plan (or monthly and not new user), check if there is already an existing pending transaction
+    if (!(plan === "monthly" && isNewUser)) {
+      const { data: existingPendingSub, error: pendingError } = await adminDb
+        .from("subscriptions")
+        .select("id, price, qrisly_response, created_at, started_at")
+        .eq("user_id", user.id)
+        .eq("plan", plan)
+        .is("ended_at", null)
+        .order("created_at", { ascending: false });
+
+      if (pendingError) {
+        console.error("Error checking pending subscription:", pendingError);
+      }
+
+      const pendingSub = (existingPendingSub ?? []).find(sub => {
+        const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+          ? String((sub.qrisly_response as any).status).toLowerCase()
+          : null;
+        return responseStatus === "pending" || !responseStatus;
+      });
+
+      if (pendingSub) {
+        const createdAt = new Date(pendingSub.created_at || pendingSub.started_at);
+        const ageInMs = Date.now() - createdAt.getTime();
+        const EXPIRE_TIMEOUT = 60 * 60 * 1000; // 1 hour
+
+        if (ageInMs > EXPIRE_TIMEOUT) {
+          // It's expired! Update database status to "expired"
+          const updatedResponse = typeof pendingSub.qrisly_response === 'object' && pendingSub.qrisly_response !== null
+            ? { ...(pendingSub.qrisly_response as any), status: "expired" }
+            : { status: "expired" };
+
+          await adminDb
+            .from("subscriptions")
+            .update({
+              qrisly_response: updatedResponse,
+              ended_at: new Date().toISOString(),
+            })
+            .eq("id", pendingSub.id);
+        } else if (pendingSub.qrisly_response) {
+          console.log(`Reusing existing pending subscription for user ${user.id}, plan ${plan}`);
+          return NextResponse.json(pendingSub.qrisly_response);
+        }
+      }
+    }
+
+    // Promo for new users: free first monthly plan
+    if (plan === "monthly" && isNewUser) {
+      const startedAt = new Date();
+      const endedAt = new Date();
+      endedAt.setDate(endedAt.getDate() + 30); // 30 Days active period
+
+      const { error: insertError } = await adminDb.from("subscriptions").insert({
+        user_id: user.id,
+        plan: "monthly",
+        price: 0,
+        qrisly_response: { status: "success" },
+        started_at: startedAt.toISOString(),
+        ended_at: endedAt.toISOString(),
+      });
+
+      if (insertError) {
+        console.error("Error creating free monthly subscription:", insertError);
+        return NextResponse.json({ error: "Failed to activate promo plan" }, { status: 500 });
+      }
+
+      // Initialize/reset usage limits
+      const { data: existingUsage } = await adminDb
+        .from("subscription_usages")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingUsage) {
+        await adminDb
+          .from("subscription_usages")
+          .update({ pdf_upload: 0, qr_scan: 0 })
+          .eq("user_id", user.id);
+      } else {
+        await adminDb.from("subscription_usages").insert({
+          user_id: user.id,
+          pdf_upload: 0,
+          qr_scan: 0,
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        activated_free: true,
+        message: "Promo Monthly Plan activated successfully for free!"
+      });
+    }
+
     const price = plan === "monthly" ? 9000 : 99000;
 
     // Convert UUID to base64url to stay within character limits
@@ -44,12 +159,19 @@ export async function POST(request: Request) {
       const mockHistoryId = `mock_hist_${Date.now()}`;
 
       // Insert pending subscription record even in mock mode for consistency
-      const adminDb = createAdminClient();
       await adminDb.from("subscriptions").insert({
         user_id: user.id,
         plan: plan,
         price: price,
-        status: "pending",
+        qrisly_response: {
+          status: "pending",
+          qr_url: mockQrUrl,
+          qr_content: mockQrContent,
+          history_id: mockHistoryId,
+          order_id: orderId,
+          amount: price,
+          is_mock: true
+        },
         started_at: new Date().toISOString(),
         ended_at: null,
       });
@@ -106,12 +228,18 @@ export async function POST(request: Request) {
     const historyId = String(data.history_id || data.id || `hist_${Date.now()}`);
 
     // Insert pending subscription record so that webhook and/or manual status check can find it
-    const adminDb = createAdminClient();
     await adminDb.from("subscriptions").insert({
       user_id: user.id,
       plan: plan,
       price: finalAmount,
-      status: "pending",
+      qrisly_response: {
+        status: "pending",
+        qr_url: qrUrl,
+        qr_content: qrContent,
+        history_id: historyId,
+        order_id: orderId,
+        amount: finalAmount
+      },
       started_at: new Date().toISOString(),
       ended_at: null,
     });

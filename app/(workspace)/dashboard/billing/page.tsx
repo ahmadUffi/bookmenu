@@ -45,33 +45,58 @@ export default async function DashboardBillingPage(
 
   const menus = mapRestaurantMenus([restaurant]);
 
-  const nowStr = new Date().toISOString();
-  // 1. Fetch active subscription info from Supabase
-  const { data: activeSub, error } = await supabase
-    .from("subscriptions")
-    .select("plan, status, ended_at")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .gt("ended_at", "now()")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  // 2. Fetch transaction history log
+  const now = new Date();
+  // 1. Fetch all subscriptions from Supabase to find active ones and history
   const { data: rawHistory } = await supabase
     .from("subscriptions")
-    .select("id, created_at, plan, price, status")
+    .select("id, created_at, plan, price, started_at, ended_at, qrisly_response")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
+  // Find all active/paid/promo subscriptions for the user that have ended_at in the future
+  const activeSubs = (rawHistory ?? []).filter(sub => {
+    if (sub.ended_at && new Date(sub.ended_at) <= now) return false;
+    if (sub.price === 0) return true;
+    const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+      ? String((sub.qrisly_response as any).status).toLowerCase()
+      : null;
+    return responseStatus === "success" || responseStatus === "paid";
+  });
+
+  // Determine currently running subscription (started_at <= now <= ended_at)
+  const currentlyRunningSub = activeSubs.find(sub => {
+    const start = new Date(sub.started_at || sub.created_at);
+    const end = sub.ended_at ? new Date(sub.ended_at) : null;
+    return start <= now && (!end || end > now);
+  });
+
+  // If none covers now, fallback to the latest active subscription (if any)
+  const activeSub = currentlyRunningSub || activeSubs[0];
+
   const activePlan = activeSub ? (activeSub.plan as "monthly" | "yearly") : "free";
-  const endedAt = activeSub?.ended_at
-    ? new Date(activeSub.ended_at).toLocaleDateString("en-US", {
+
+  // Calculate the overall ended_at of the entire active subscription chain (the max ended_at)
+  let endedAt: string | null = null;
+  if (activeSubs.length > 0) {
+    const endDates = activeSubs
+      .map(sub => sub.ended_at ? new Date(sub.ended_at).getTime() : 0)
+      .filter(time => time > 0);
+    if (endDates.length > 0) {
+      endedAt = new Date(Math.max(...endDates)).toLocaleDateString("en-US", {
         month: "long",
         day: "numeric",
         year: "numeric",
-      })
-    : null;
+      });
+    }
+  }
+
+  // Map the active subscription chain
+  const activeChain = activeSubs.map(sub => ({
+    id: sub.id,
+    plan: sub.plan,
+    startedAt: sub.started_at || sub.created_at,
+    endedAt: sub.ended_at,
+  }));
 
   const transactions = (rawHistory ?? []).map((sub) => {
     const dateStr = new Date(sub.created_at).toLocaleDateString("en-US", {
@@ -90,8 +115,18 @@ export default async function DashboardBillingPage(
     const invoiceNo = `INV-${year}-${sub.id.substring(0, 8).toUpperCase()}`;
 
     let status: "Paid" | "Pending" | "Failed" = "Failed";
-    if (sub.status === "active") status = "Paid";
-    else if (sub.status === "pending") status = "Pending";
+    if (sub.price === 0) {
+      status = "Paid";
+    } else {
+      const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+        ? String((sub.qrisly_response as any).status).toLowerCase()
+        : null;
+      if (responseStatus === "success" || responseStatus === "paid") {
+        status = "Paid";
+      } else if (responseStatus === "pending" || !responseStatus) {
+        status = "Pending";
+      }
+    }
 
     return {
       id: sub.id,
@@ -103,6 +138,14 @@ export default async function DashboardBillingPage(
     };
   });
 
+  const isPromoEligible = !(rawHistory ?? []).some(sub => {
+    if (sub.price === 0) return true;
+    const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+      ? String((sub.qrisly_response as any).status).toLowerCase()
+      : null;
+    return responseStatus === "success" || responseStatus === "paid";
+  });
+
   return (
     <BillingPanel
       initialBusinessName={restaurant.restaurant_name}
@@ -110,6 +153,8 @@ export default async function DashboardBillingPage(
       activePlan={activePlan}
       endedAt={endedAt}
       transactions={transactions}
+      isPromoEligible={isPromoEligible}
+      activeChain={activeChain}
     />
   );
 }

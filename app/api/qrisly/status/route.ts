@@ -58,8 +58,8 @@ export async function GET(request: Request) {
       const data = result.data || result;
       
       // Determine status from payload
-      paymentStatus = data.status || data.payment_status || "pending";
-      isSuccess = paymentStatus === "success" || paymentStatus === "settlement" || paymentStatus === "paid" || paymentStatus === "Success" || paymentStatus === "SUCCESS";
+      paymentStatus = String(data.status || data.payment_status || "pending").toLowerCase();
+      isSuccess = paymentStatus === "success" || paymentStatus === "paid";
     }
 
     // If payment is successful, update subscription in DB (acting as a fallback/accelerator for webhook)
@@ -86,58 +86,86 @@ export async function GET(request: Request) {
         }
 
         const adminDb = createAdminClient();
-        const startedAt = new Date();
-        const endedAt = new Date();
-        if (plan === "monthly") {
-          endedAt.setDate(endedAt.getDate() + 30);
-        } else if (plan === "yearly") {
-          endedAt.setDate(endedAt.getDate() + 365);
-        }
-
         const price = plan === "monthly" ? 9000 : 99000;
 
-        // Check if subscription already exists to avoid duplication
-        const { data: existingSub } = await adminDb
+        // Fetch subscriptions to find the specific one for this orderId
+        const { data: userSubs } = await adminDb
           .from("subscriptions")
-          .select("id")
-          .eq("user_id", userId)
-          .eq("plan", plan)
-          .eq("status", "active")
-          .gt("ended_at", startedAt.toISOString())
-          .limit(1)
-          .maybeSingle();
+          .select("id, price, qrisly_response, ended_at")
+          .eq("user_id", userId);
 
-        if (!existingSub) {
-          // Look for a pending subscription first
-          const { data: pendingSub } = await adminDb
+        const targetSub = (userSubs ?? []).find(sub => {
+          const subOrderId = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+            ? (sub.qrisly_response as any).order_id
+            : null;
+          return subOrderId === orderId;
+        });
+
+        // Determine if targetSub is already activated
+        const isTargetAlreadyActivated = targetSub && targetSub.ended_at !== null && (() => {
+          const responseStatus = typeof targetSub.qrisly_response === 'object' && targetSub.qrisly_response !== null
+            ? String((targetSub.qrisly_response as any).status).toLowerCase()
+            : null;
+          return responseStatus === "success" || responseStatus === "paid";
+        })();
+
+        if (!isTargetAlreadyActivated) {
+          // Calculate startedAt and endedAt based on maximum ended_at of existing active plans
+          const nowStr = new Date().toISOString();
+          const { data: existingActiveSubs } = await adminDb
             .from("subscriptions")
-            .select("id, price")
+            .select("ended_at, price, qrisly_response")
             .eq("user_id", userId)
-            .eq("plan", plan)
-            .eq("status", "pending")
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
+            .gt("ended_at", nowStr);
 
-          if (pendingSub) {
+          const validActiveSubs = (existingActiveSubs ?? []).filter(sub => {
+            if (sub.price === 0) return true; // promo
+            const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+              ? String((sub.qrisly_response as any).status).toLowerCase()
+              : null;
+            return responseStatus === "success" || responseStatus === "paid";
+          });
+
+          let finalStartedAt = new Date();
+          if (validActiveSubs.length > 0) {
+            const endDates = validActiveSubs
+              .map(sub => sub.ended_at ? new Date(sub.ended_at).getTime() : 0)
+              .filter(time => time > 0);
+            if (endDates.length > 0) {
+              finalStartedAt = new Date(Math.max(...endDates));
+            }
+          }
+
+          const finalEndedAt = new Date(finalStartedAt);
+          if (plan === "monthly") {
+            finalEndedAt.setDate(finalEndedAt.getDate() + 30);
+          } else if (plan === "yearly") {
+            finalEndedAt.setDate(finalEndedAt.getDate() + 365);
+          }
+
+          if (targetSub) {
             // Update pending to active
+            const updatedResponse = typeof targetSub.qrisly_response === 'object' && targetSub.qrisly_response !== null
+              ? { ...(targetSub.qrisly_response as any), status: paymentStatus }
+              : { status: paymentStatus };
+
             await adminDb
               .from("subscriptions")
               .update({
-                status: "active",
-                started_at: startedAt.toISOString(),
-                ended_at: endedAt.toISOString(),
+                qrisly_response: updatedResponse,
+                started_at: finalStartedAt.toISOString(),
+                ended_at: finalEndedAt.toISOString(),
               })
-              .eq("id", pendingSub.id);
+              .eq("id", targetSub.id);
           } else {
             // Create subscription record if none pending
             await adminDb.from("subscriptions").insert({
               user_id: userId,
               plan: plan,
               price: price,
-              status: "active",
-              started_at: startedAt.toISOString(),
-              ended_at: endedAt.toISOString(),
+              qrisly_response: { status: paymentStatus, order_id: orderId, history_id: historyId },
+              started_at: finalStartedAt.toISOString(),
+              ended_at: finalEndedAt.toISOString(),
             });
           }
 
@@ -160,14 +188,60 @@ export async function GET(request: Request) {
               qr_scan: 0,
             });
           }
+        }
+      }
+    } else if (!isSuccess && orderId.startsWith("SUB_")) {
+      // If it is failed/expired/canceled, update the record in DB so it doesn't stay pending forever
+      const isFailed = paymentStatus === "expired";
 
-          // Deactivate old active plans
-          await adminDb
+      if (isFailed) {
+        const parts = orderId.split("_");
+        let userId = parts[1];
+        const plan = parts[2];
+
+        if (userId && plan) {
+          // Decode base64url UUID back to standard UUID
+          if (userId.length === 22) {
+            try {
+              const hexBack = Buffer.from(userId, "base64url").toString("hex");
+              userId = [
+                hexBack.slice(0, 8),
+                hexBack.slice(8, 12),
+                hexBack.slice(12, 16),
+                hexBack.slice(16, 20),
+                hexBack.slice(20),
+              ].join("-");
+            } catch (e) {
+              console.error("Failed to decode user UUID:", e);
+            }
+          }
+
+          const adminDb = createAdminClient();
+          const { data: userSubs } = await adminDb
             .from("subscriptions")
-            .update({ status: "inactive" })
-            .eq("user_id", userId)
-            .eq("status", "active")
-            .not("started_at", "eq", startedAt.toISOString());
+            .select("id, price, qrisly_response, ended_at")
+            .eq("user_id", userId);
+
+          const targetSub = (userSubs ?? []).find(sub => {
+            const subOrderId = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
+              ? (sub.qrisly_response as any).order_id
+              : null;
+            return subOrderId === orderId;
+          });
+
+          if (targetSub && targetSub.ended_at === null) {
+            const updatedResponse = typeof targetSub.qrisly_response === 'object' && targetSub.qrisly_response !== null
+              ? { ...(targetSub.qrisly_response as any), status: paymentStatus.toLowerCase() }
+              : { status: paymentStatus.toLowerCase() };
+
+            await adminDb
+              .from("subscriptions")
+              .update({
+                qrisly_response: updatedResponse,
+                ended_at: new Date().toISOString(),
+              })
+              .eq("id", targetSub.id);
+          }
         }
       }
     }
