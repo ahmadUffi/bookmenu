@@ -922,14 +922,30 @@ export default function BillingPanel({
                       className="h-full bg-[var(--green)] rounded-full transition-all duration-500"
                       style={{
                         width:
-                          typeof activePlanDetails.scanLimit === "number"
-                            ? `${Math.min(
-                                (activePlanDetails.scansUsed /
-                                  activePlanDetails.scanLimit) *
+                          activePlanDetails.scansUsed === 0
+                            ? "0%"
+                            : typeof activePlanDetails.scanLimit === "number"
+                              ? `${Math.min(
+                                  (activePlanDetails.scansUsed /
+                                    activePlanDetails.scanLimit) *
+                                    100,
                                   100,
-                                100,
-                              )}%`
-                            : "24%",
+                                )}%`
+                              : `${
+                                  activePlanDetails.scansUsed <= 1000
+                                    ? 1 +
+                                      ((activePlanDetails.scansUsed - 1) /
+                                        999) *
+                                        79
+                                    : Math.min(
+                                        95,
+                                        80 +
+                                          ((activePlanDetails.scansUsed -
+                                            1000) /
+                                            9000) *
+                                            15,
+                                      )
+                                }%`,
                       }}
                     />
                   </div>
