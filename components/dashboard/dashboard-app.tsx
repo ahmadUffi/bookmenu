@@ -33,6 +33,7 @@ type DashboardAppProps = {
   message: string | null;
   uploadMenuAction: (formData: FormData) => void;
   plan: string;
+  scansUsed: number;
 };
 
 const navItems = [
@@ -51,6 +52,7 @@ export default function DashboardApp({
   message,
   uploadMenuAction,
   plan,
+  scansUsed,
 }: DashboardAppProps) {
   const menus = initialMenus;
   const uploadLimit = plan === "monthly" ? 10 : plan === "yearly" ? 10 : 1;
@@ -128,6 +130,18 @@ export default function DashboardApp({
 
   return (
     <div className="px-4 py-6 md:px-8 md:py-8">
+      {plan === "free" && scansUsed >= 1000 && (
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm animate-fade-in">
+          <AlertCircle className="shrink-0 text-red-600 mt-0.5" size={20} />
+          <div>
+            <h4 className="font-bold text-red-900">Batas Scan Bulanan Tercapai</h4>
+            <p className="mt-1 text-xs text-red-700 leading-relaxed">
+              Menu Anda telah di-scan sebanyak {scansUsed.toLocaleString("id-ID")} kali. Halaman menu publik Anda saat ini dinonaktifkan sementara.
+              Silakan <a href="/dashboard/billing" className="font-bold underline hover:text-red-900">upgrade ke paket Premium</a> untuk membuka akses tak terbatas.
+            </p>
+          </div>
+        </div>
+      )}
       <div id="overview" className="scroll-mt-28">
         <div className="grid gap-4 md:grid-cols-3">
           {[

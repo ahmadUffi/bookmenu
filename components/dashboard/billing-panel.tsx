@@ -41,6 +41,8 @@ type BillingPanelProps = {
     startedAt: string;
     endedAt: string | null;
   }[];
+  scansUsed: number;
+  lastResetDate: string | null;
 };
 
 type PlanType = "free" | "monthly" | "yearly";
@@ -53,6 +55,8 @@ export default function BillingPanel({
   transactions,
   isPromoEligible = false,
   activeChain = [],
+  scansUsed,
+  lastResetDate,
 }: BillingPanelProps) {
   const [selectedPlan, setSelectedPlan] = useState<PlanType>(activePlan);
   const [notice, setNotice] = useState<string | null>(null);
@@ -92,7 +96,7 @@ export default function BillingPanel({
       period: "month",
       pdfLimit: 1,
       scanLimit: 1000,
-      scansUsed: 420,
+      scansUsed: scansUsed,
     },
     monthly: {
       name: "Monthly Plan",
@@ -100,7 +104,7 @@ export default function BillingPanel({
       period: "month",
       pdfLimit: 10,
       scanLimit: "Unlimited",
-      scansUsed: 1240,
+      scansUsed: scansUsed,
     },
     yearly: {
       name: "Yearly Plan",
@@ -108,7 +112,7 @@ export default function BillingPanel({
       period: "year",
       pdfLimit: 10,
       scanLimit: "Unlimited",
-      scansUsed: 1240,
+      scansUsed: scansUsed,
     },
   };
 
@@ -929,6 +933,40 @@ export default function BillingPanel({
                       }}
                     />
                   </div>
+                  {activePlan === "free" && lastResetDate && (
+                    <p className="mt-2 text-[10px] text-[#666a61] flex items-center gap-1.5 leading-relaxed">
+                      <Info
+                        size={11}
+                        className="text-[var(--green)] shrink-0"
+                      />
+                      <span>
+                        Reset counter scan berikutnya:{" "}
+                        <strong className="text-[var(--charcoal)]">
+                          {(() => {
+                            const lastReset = new Date(lastResetDate);
+                            const nextReset = new Date(
+                              lastReset.getTime() + 30 * 24 * 60 * 60 * 1000,
+                            );
+                            return nextReset.toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            });
+                          })()}
+                        </strong>
+                      </span>
+                    </p>
+                  )}
+                  {activePlan === "free" &&
+                    activePlanDetails.scansUsed >= 1000 && (
+                      <p className="mt-1.5 text-[10px] text-red-600 font-semibold flex items-center gap-1">
+                        <AlertCircle size={10} className="shrink-0" />
+                        <span>
+                          Batas scan bulanan tercapai. Upgrade paket untuk
+                          mengaktifkan kembali menu Anda.
+                        </span>
+                      </p>
+                    )}
                 </div>
               </div>
             </div>
