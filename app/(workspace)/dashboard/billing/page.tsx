@@ -58,7 +58,7 @@ export default async function DashboardBillingPage(
     if (sub.ended_at && new Date(sub.ended_at) <= now) return false;
     if (sub.price === 0) return true;
     const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-      ? String((sub.qrisly_response as any).status).toLowerCase()
+      ? String((sub.qrisly_response as { status?: string }).status).toLowerCase()
       : null;
     return responseStatus === "success" || responseStatus === "paid";
   });
@@ -119,7 +119,7 @@ export default async function DashboardBillingPage(
       status = "Paid";
     } else {
       const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-        ? String((sub.qrisly_response as any).status).toLowerCase()
+        ? String((sub.qrisly_response as { status?: string }).status).toLowerCase()
         : null;
       if (responseStatus === "success" || responseStatus === "paid") {
         status = "Paid";
@@ -141,10 +141,29 @@ export default async function DashboardBillingPage(
   const isPromoEligible = !(rawHistory ?? []).some(sub => {
     if (sub.price === 0) return true;
     const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-      ? String((sub.qrisly_response as any).status).toLowerCase()
+      ? String((sub.qrisly_response as { status?: string }).status).toLowerCase()
       : null;
     return responseStatus === "success" || responseStatus === "paid";
   });
+
+  let scansUsed = 0;
+  let lastResetDate: string | null = null;
+
+  try {
+    const { data: usageData, error: usageError } = await supabase.rpc("get_or_create_usage", {
+      owner_uuid: user.id,
+      is_free_plan: activePlan === "free",
+    });
+
+    if (usageError) {
+      console.error("Error fetching usage stats:", usageError);
+    } else if (usageData && usageData.length > 0) {
+      scansUsed = usageData[0].res_qr_scan;
+      lastResetDate = usageData[0].res_updated_at || usageData[0].res_created_at;
+    }
+  } catch (err) {
+    console.error("Error retrieving usage stats:", err);
+  }
 
   return (
     <BillingPanel
@@ -155,6 +174,8 @@ export default async function DashboardBillingPage(
       transactions={transactions}
       isPromoEligible={isPromoEligible}
       activeChain={activeChain}
+      scansUsed={scansUsed}
+      lastResetDate={lastResetDate}
     />
   );
 }
