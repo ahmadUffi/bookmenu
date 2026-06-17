@@ -65,12 +65,28 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
   const activeSub = (activeSubs ?? []).find(sub => {
     if (sub.price === 0) return true;
     const responseStatus = typeof sub.qrisly_response === 'object' && sub.qrisly_response !== null
-      ? String((sub.qrisly_response as any).status).toLowerCase()
+      ? String((sub.qrisly_response as { status?: string }).status).toLowerCase()
       : null;
     return responseStatus === "success" || responseStatus === "paid";
   });
 
   const plan = activeSub?.plan || "free";
+
+  let scansUsed = 0;
+  try {
+    const { data: usageData, error: usageError } = await supabase.rpc("get_or_create_usage", {
+      owner_uuid: user.id,
+      is_free_plan: plan === "free",
+    });
+
+    if (usageError) {
+      console.error("Error fetching usage for dashboard:", usageError);
+    } else if (usageData && usageData.length > 0) {
+      scansUsed = usageData[0].res_qr_scan;
+    }
+  } catch (err) {
+    console.error("Error retrieving dashboard usage:", err);
+  }
 
   const businessName = restaurants?.[0]?.restaurant_name ?? "";
   return (
@@ -82,6 +98,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
       uploadMenuAction={uploadMenu}
       error={error}
       plan={plan}
+      scansUsed={scansUsed}
     />
   );
 }
