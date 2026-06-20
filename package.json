@@ -20,6 +20,7 @@
     "react-hook-form": "^7.75.0",
     "react-pageflip": "^2.0.3",
     "react-pdf": "^10.4.1",
+    "recharts": "^3.8.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
