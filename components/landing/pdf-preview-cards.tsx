@@ -70,19 +70,36 @@ export default function PdfPreviewCards({ samples }: PdfPreviewCardsProps) {
               </p>
             </div>
             <div className="mx-5 overflow-hidden rounded-2xl border border-white/70 bg-white">
-              <object
-                data={`${page.file}#toolbar=0&navpanes=0&scrollbar=0`}
-                type="application/pdf"
-                className="h-[300px] w-full"
-                aria-label={`Preview PDF ${page.title}`}
+              {/* PDF embed — only rendered on desktop; mobile browsers don't support <object> PDF */}
+              <div className="hidden md:block overflow-hidden">
+                <object
+                  data={`${page.file}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                  type="application/pdf"
+                  className="h-[300px] w-full"
+                  aria-label={`Preview PDF ${page.title}`}
+                  scrolling="no"
+                >
+                  <div className="flex h-[300px] flex-col items-center justify-center bg-white p-5 text-center">
+                    <FileText className="text-[#0ea5e9]" size={30} />
+                    <p className="mt-3 text-sm font-semibold text-[#082f49]">
+                      Preview PDF belum tersedia.
+                    </p>
+                  </div>
+                </object>
+              </div>
+              {/* Mobile placeholder — tap to open flipbook */}
+              <div
+                className="flex h-[180px] cursor-pointer flex-col items-center justify-center gap-3 bg-gradient-to-b from-sky-50 to-white p-5 text-center md:hidden"
+                onClick={() => setActivePdf(page)}
               >
-                <div className="flex h-[300px] flex-col items-center justify-center bg-white p-5 text-center">
-                  <FileText className="text-[#0ea5e9]" size={30} />
-                  <p className="mt-3 text-sm font-semibold text-[#082f49]">
-                    Preview PDF belum tersedia.
-                  </p>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0ea5e9]/10">
+                  <FileText className="text-[#0ea5e9]" size={28} />
                 </div>
-              </object>
+                <p className="text-sm font-semibold text-[#082f49]">
+                  {page.title}
+                </p>
+                <p className="text-xs text-slate-500">Tap untuk lihat preview</p>
+              </div>
             </div>
             <div className="p-5">
               <button

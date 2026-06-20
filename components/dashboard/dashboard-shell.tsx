@@ -12,6 +12,8 @@ import {
   QrCode,
   Sparkles,
   CreditCard,
+  Menu,
+  X,
 } from "lucide-react";
 import { uploadConfig } from "@/lib/config";
 
@@ -47,6 +49,7 @@ export default function DashboardShell({
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem("doclume:sidebar-collapsed") === "true";
   });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   function toggleCollapsed() {
     setCollapsed((current) => {
@@ -75,25 +78,39 @@ export default function DashboardShell({
   return (
     <main className="dashboard-shell-root h-screen overflow-hidden bg-[var(--cream)] text-[var(--charcoal)]">
       <div
-        className={`dashboard-shell-grid grid h-screen transition-[grid-template-columns] duration-200 ${
+        className={`dashboard-shell-grid relative grid h-screen transition-[grid-template-columns] duration-200 ${
           collapsed ? "lg:grid-cols-[88px_1fr]" : "lg:grid-cols-[280px_1fr]"
         }`}
       >
-        <aside className="qr-print-hide hidden h-screen overflow-hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 backdrop-blur lg:block">
+        <aside className={`qr-print-hide fixed inset-y-0 left-0 z-40 h-screen w-72 overflow-hidden border-r border-[#e4dbce] bg-[#fffdf8]/86 p-5 backdrop-blur transition-transform duration-200 lg:static lg:w-auto lg:translate-x-0 ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        } ${collapsed ? "lg:w-[88px]" : "lg:w-[280px]"}`}>
           <div
-            className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}
+            className={`flex items-center justify-between ${
+              collapsed ? "justify-center" : "gap-3"
+            }`}
           >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--charcoal)] text-white">
-              <Sparkles size={19} />
-            </div>
-            {collapsed ? null : (
-              <div className="min-w-0">
-                <p className="truncate font-semibold tracking-tight">DocLume</p>
-                <p className="truncate text-xs font-medium text-[#73766e]">
-                  Document OS
-                </p>
+            <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--charcoal)] text-white">
+                <Sparkles size={19} />
               </div>
-            )}
+              {collapsed ? null : (
+                <div className="min-w-0">
+                  <p className="truncate font-semibold tracking-tight">DocLume</p>
+                  <p className="truncate text-xs font-medium text-[#73766e]">
+                    Document OS
+                  </p>
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="inline-flex lg:hidden items-center justify-center rounded-lg text-[#4d5149] hover:bg-[#f3ede3]"
+              aria-label="Close menu"
+            >
+              <X size={24} />
+            </button>
           </div>
 
           <button
@@ -121,6 +138,7 @@ export default function DashboardShell({
                 <Link
                   key={item.key}
                   href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
                   title={collapsed ? item.label : undefined}
                   className={`flex min-h-11 w-full items-center rounded-2xl text-left text-sm font-semibold transition ${
                     collapsed ? "justify-center px-0" : "gap-3 px-3"
@@ -148,16 +166,34 @@ export default function DashboardShell({
           )}
         </aside>
 
+        {mobileMenuOpen ? (
+          <div
+            className="fixed inset-0 z-30 bg-black/20 lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+        ) : null}
+
         <section className="dashboard-shell-content h-screen min-h-0 overflow-y-auto">
           <header className="qr-print-hide sticky top-0 z-30 border-b border-[#e4dbce] bg-[#f7f3eb]/88 px-4 py-4 backdrop-blur-xl md:px-8">
             <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-[var(--green)]">
-                  {eyebrow}
-                </p>
-                <h1 className="truncate text-2xl font-semibold tracking-tight md:text-3xl">
-                  {title}
-                </h1>
+              <div className="flex min-w-0 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="inline-flex lg:hidden items-center justify-center rounded-lg text-[#4d5149] hover:bg-[#f3ede3]"
+                  aria-label="Open menu"
+                >
+                  <Menu size={24} />
+                </button>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-[var(--green)]">
+                    {eyebrow}
+                  </p>
+                  <h1 className="truncate text-2xl font-semibold tracking-tight md:text-3xl">
+                    {title}
+                  </h1>
+                </div>
               </div>
               <a
                 href="/auth/logout"

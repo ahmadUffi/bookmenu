@@ -110,15 +110,15 @@ const samplePages = [
     file: "/sample-menu.pdf",
   },
   {
-    title: "Katalog Produk",
-    subtitle: "Preview PDF katalog",
+    title: "Katalog Menu",
+    subtitle: "Preview PDF Menu",
     accent: "bg-[#0ea5e9]",
     panel: "bg-[#eff6ff]",
     file: "/sample-catalog.pdf",
   },
   {
-    title: "Brosur Promo",
-    subtitle: "Preview PDF brosur",
+    title: "Katalog Buket",
+    subtitle: "Preview PDF katalog",
     accent: "bg-[#14b8a6]",
     panel: "bg-[#f0fdfa]",
     file: "/sample-brochure.pdf",
@@ -373,21 +373,6 @@ export default function Home() {
               Taruh tiga file sample di folder public. Pengunjung bisa melihat
               contoh menu, katalog, dan brosur tanpa membuka file mentah.
             </p>
-            <div className="mt-7 rounded-3xl border border-sky-100 bg-white/70 p-4 text-sm leading-6 text-slate-600">
-              File yang dibaca:{" "}
-              <span className="font-semibold text-[#0c4a6e]">
-                /sample-menu.pdf
-              </span>
-              ,{" "}
-              <span className="font-semibold text-[#0c4a6e]">
-                /sample-catalog.pdf
-              </span>
-              , dan{" "}
-              <span className="font-semibold text-[#0c4a6e]">
-                /sample-brochure.pdf
-              </span>
-              .
-            </div>
           </div>
           <PdfPreviewCards samples={samplePages} />
         </div>

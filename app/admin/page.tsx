@@ -1,168 +1,96 @@
+import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  MoreHorizontal,
-  Search,
-  ShieldCheck,
-  FileText,
-  UploadCloud,
-  Users,
-} from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { Users, Building2, CreditCard, TrendingUp, ShieldOff, PowerOff, ArrowRight } from "lucide-react";
 
-export default async function AdminPage() {
-  const supabase = await createClient();
+export default async function AdminOverviewPage() {
+  const adminDb = createAdminClient();
 
-  if (!supabase) {
-    redirect("/login");
-  }
+  const [
+    { count: totalUsers },
+    { count: bannedUsers },
+    { count: totalWorkspaces },
+    { count: inactiveWorkspaces },
+    { count: activePaidSubs },
+    { data: revenueData },
+  ] = await Promise.all([
+    adminDb.from("users").select("*", { count: "exact", head: true }),
+    adminDb.from("users").select("*", { count: "exact", head: true }).eq("is_active", false),
+    adminDb.from("restaurants").select("*", { count: "exact", head: true }),
+    adminDb.from("restaurants").select("*", { count: "exact", head: true }).eq("is_active", false),
+    adminDb
+      .from("subscriptions")
+      .select("*", { count: "exact", head: true })
+      .gt("ended_at", new Date().toISOString())
+      .gt("price", 0),
+    adminDb
+      .from("subscriptions")
+      .select("price")
+      .in("qrisly_response->>status", ["success", "paid", "Success", "Paid"]),
+  ]);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const totalRevenue = (revenueData ?? []).reduce((sum, s) => sum + (Number(s.price) || 0), 0);
 
-  if (!user) {
-    redirect("/login");
-  }
+  const stats = [
+    { label: "Total Users", value: totalUsers ?? 0, icon: Users, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100", href: "/admin/users" },
+    { label: "Banned Users", value: bannedUsers ?? 0, icon: ShieldOff, color: "text-red-600", bg: "bg-red-50", border: "border-red-100", href: "/admin/users" },
+    { label: "Total Workspaces", value: totalWorkspaces ?? 0, icon: Building2, color: "text-violet-600", bg: "bg-violet-50", border: "border-violet-100", href: "/admin/workspaces" },
+    { label: "Inactive Workspaces", value: inactiveWorkspaces ?? 0, icon: PowerOff, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100", href: "/admin/workspaces" },
+    { label: "Total Revenue", value: `Rp${totalRevenue.toLocaleString("id-ID")}`, icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", href: "/admin/revenue" },
+    { label: "Active Paid Subs", value: activePaidSubs ?? 0, icon: CreditCard, color: "text-sky-600", bg: "bg-sky-50", border: "border-sky-100", href: "/admin/subscriptions" },
+  ];
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    redirect("/dashboard");
-  }
-
-  const { data: restaurants } = await supabase
-    .from("restaurants")
-    .select("id, restaurant_name, slug, menus(id, is_active)");
-
-  const rows = (restaurants ?? []).map((restaurant) => {
-    const menus = restaurant.menus ?? [];
-    const activeMenus = menus.filter((menu) => menu.is_active).length;
-
-    return {
-      id: restaurant.id,
-      name: restaurant.restaurant_name,
-      slug: restaurant.slug,
-      status: activeMenus > 0 ? "Active" : "No active document",
-      menuCount: menus.length,
-    };
-  });
-
-  const activeMenuCount = rows.reduce((count, row) => count + row.menuCount, 0);
+  const quickLinks = [
+    { label: "Manage Users", desc: "Ban, unban, view user details", href: "/admin/users" },
+    { label: "Manage Workspaces", desc: "Enable, disable, delete menus", href: "/admin/workspaces" },
+    { label: "Subscriptions", desc: "Adjust duration, monitor active subs", href: "/admin/subscriptions" },
+    { label: "Revenue", desc: "Track payments and transactions", href: "/admin/revenue" },
+    { label: "Analytics", desc: "User growth and engagement metrics", href: "/admin/analytics" },
+  ];
 
   return (
-    <main className="min-h-screen bg-[var(--cream)] text-[var(--charcoal)]">
-      <header className="border-b border-[#e4dbce] bg-[#fffdf8]/84 px-4 py-4 backdrop-blur-xl md:px-8">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-[var(--green)]">Admin dashboard</p>
-            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-              Workspace management
-            </h1>
-          </div>
-          <Link
-            href="/"
-            className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-[#d9d0c2] bg-white px-4 text-sm font-semibold transition hover:-translate-y-0.5"
-          >
-            <ArrowLeft size={16} />
-            Home
-          </Link>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
-        <div className="grid gap-4 md:grid-cols-4">
-          {[
-            ["Workspaces", rows.length.toString(), FileText],
-            ["Documents", activeMenuCount.toString(), UploadCloud],
-            ["Owners", rows.length.toString(), Users],
-            ["Moderation", "0", ShieldCheck],
-          ].map(([label, value, Icon]) => (
-            <div
-              key={label as string}
-              className="rounded-3xl border border-[#e4dbce] bg-[#fffdf8] p-5 shadow-sm"
+    <div className="space-y-6 p-4 md:p-6">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <Link
+              key={stat.label}
+              href={stat.href}
+              className={`group relative overflow-hidden rounded-2xl border ${stat.border} bg-white p-4 shadow-sm transition hover:shadow-md`}
             >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-[#666a61]">{label as string}</p>
-                <Icon className="text-[var(--green)]" size={21} />
+              <div className="flex items-start justify-between">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${stat.bg}`}>
+                  <Icon size={17} className={stat.color} />
+                </div>
+                <ArrowRight size={14} className="text-slate-300 transition group-hover:text-slate-500" />
               </div>
-              <p className="mt-5 text-3xl font-semibold tracking-tight">{value as string}</p>
-            </div>
+              <div className="mt-4">
+                <p className={`text-2xl font-bold tracking-tight ${stat.color}`}>{stat.value}</p>
+                <p className="mt-1 text-xs font-medium text-slate-500">{stat.label}</p>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Quick Access</h2>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {quickLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+            >
+              <div>
+                <p className="text-sm font-semibold text-slate-800">{link.label}</p>
+                <p className="mt-0.5 text-xs text-slate-500">{link.desc}</p>
+              </div>
+              <ArrowRight size={15} className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-500" />
+            </Link>
           ))}
         </div>
-
-        <section className="mt-6 overflow-hidden rounded-[1.75rem] border border-[#e4dbce] bg-[#fffdf8] shadow-[var(--shadow-card)]">
-          <div className="border-b border-[#e4dbce] p-5">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight">
-                  Document moderation
-                </h2>
-                <p className="mt-1 text-sm text-[#666a61]">
-                  Review workspace profiles, document status, and scan health.
-                </p>
-              </div>
-              <label className="flex min-h-11 items-center gap-2 rounded-2xl border border-[#ded5c7] bg-[#fbf7ef] px-4 text-sm font-semibold text-[#666a61]">
-                <Search size={17} />
-                <input
-                  className="w-full bg-transparent outline-none placeholder:text-[#8a8d84]"
-                  placeholder="Search workspaces"
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="bg-[#fbf7ef] text-xs uppercase tracking-[0.14em] text-[#777a72]">
-                <tr>
-                  <th className="px-5 py-4 font-semibold">Workspace</th>
-                  <th className="px-5 py-4 font-semibold">Slug</th>
-                  <th className="px-5 py-4 font-semibold">Status</th>
-                  <th className="px-5 py-4 font-semibold">Documents</th>
-                  <th className="px-5 py-4 font-semibold">Analytics</th>
-                  <th className="px-5 py-4 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#ece4d8]">
-                {rows.map((restaurant) => (
-                  <tr key={restaurant.id} className="transition hover:bg-[#fbf7ef]">
-                    <td className="px-5 py-4 font-semibold">{restaurant.name}</td>
-                    <td className="px-5 py-4 text-[#666a61]">/{restaurant.slug}</td>
-                    <td className="px-5 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          restaurant.status === "Active"
-                            ? "bg-[#eef6ed] text-[var(--green-dark)]"
-                            : "bg-[#fff5df] text-[#8a6116]"
-                        }`}
-                      >
-                        <CheckCircle2 size={13} />
-                        {restaurant.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-[#666a61]">
-                      {restaurant.menuCount} document{restaurant.menuCount === 1 ? "" : "s"}
-                    </td>
-                    <td className="px-5 py-4 text-[#666a61]">Not tracked</td>
-                    <td className="px-5 py-4">
-                      <button className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#d9d0c2] bg-white transition hover:bg-[#fbf7ef]" aria-label={`Actions for ${restaurant.name}`}>
-                        <MoreHorizontal size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
       </div>
-    </main>
+    </div>
   );
 }
