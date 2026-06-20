@@ -75,9 +75,8 @@ export default function PdfPreviewCards({ samples }: PdfPreviewCardsProps) {
                 <object
                   data={`${page.file}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                   type="application/pdf"
-                  className="h-[300px] w-full"
+                  className="h-[300px] w-full overflow-hidden"
                   aria-label={`Preview PDF ${page.title}`}
-                  scrolling="no"
                 >
                   <div className="flex h-[300px] flex-col items-center justify-center bg-white p-5 text-center">
                     <FileText className="text-[#0ea5e9]" size={30} />
